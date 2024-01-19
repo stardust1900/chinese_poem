@@ -14,10 +14,34 @@ class PoemLocalizations {
     'en': {
       'title': 'Chinese Poems',
       'homePage': 'Chinese Poems Home Page',
+      'grade.1': '1st grade',
+      'grade.2': '2nd grade',
+      'grade.3': '3th grade',
+      'grade.4': '4th grade',
+      'grade.5': '5th grade',
+      'grade.6': '6th grade',
+      'grade.7': '7th grade',
+      'grade.8': '8th grade',
+      'grade.9': '9th grade',
+      'grade.10': '10th grade',
+      'grade.11': '11th grade',
+      'grade.12': '12th grade',
     },
     'zh': {
       'title': '中国古诗',
       'homePage': '中国古诗首页',
+      'grade.1': '小学一年级',
+      'grade.2': '小学二年级',
+      'grade.3': '小学三年级',
+      'grade.4': '小学四年级',
+      'grade.5': '小学五年级',
+      'grade.6': '小学六年级',
+      'grade.7': '初一',
+      'grade.8': '初二',
+      'grade.9': '初三',
+      'grade.10': '高一',
+      'grade.11': '高二',
+      'grade.12': '高三',
     },
   };
 
@@ -29,6 +53,10 @@ class PoemLocalizations {
 
   String get homePage {
     return _localizedValues[locale.languageCode]!['homePage']!;
+  }
+
+  String getGrade(int num) {
+    return _localizedValues[locale.languageCode]!['grade.$num']!;
   }
 }
 
