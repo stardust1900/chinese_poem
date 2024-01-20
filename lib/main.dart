@@ -71,6 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final changeLocale;
   bool checked1 = false;
   bool checked2 = false;
+  List<bool> checkList = [];
   _MyHomePageState(this.changeLocale);
 
   void _incrementCounter() {
@@ -99,36 +100,27 @@ class _MyHomePageState extends State<MyHomePage> {
       icon: const Icon(Icons.translate),
       label: const Text(""),
     );
+    List<Widget> tileList = [];
+    for(int i=0;i<13;i++) {
+      checkList.add(false);
+      final tile = ListTile(
+        title: Text(PoemLocalizations.of(context).getGrade(i),),
+        leading: checkList[i]
+              ? const Icon(Icons.check_circle)
+              : const Icon(Icons.check_circle_outline),
+        onTap: () {
+            setState(() {
+              checkList[i] = !checkList[i];
+            });
+          },
+      );
+      tileList.add(tile);
+    }
     final drawerItems = ListView(
       children: [
         drawerHeader,
         button,
-        ListTile(
-          title: Text(
-            PoemLocalizations.of(context).getGrade(1),
-          ),
-          leading: checked1
-              ? const Icon(Icons.check_circle)
-              : const Icon(Icons.check_circle_outline),
-          onTap: () {
-            setState(() {
-              checked1 = !checked1;
-            });
-          },
-        ),
-        ListTile(
-          title: Text(
-            PoemLocalizations.of(context).getGrade(2),
-          ),
-          leading: checked2
-              ? const Icon(Icons.check_circle)
-              : const Icon(Icons.check_circle_outline),
-          onTap: () {
-            setState(() {
-              checked2 = !checked2;
-            });
-          },
-        ),
+        ...tileList,
       ],
     );
     return Scaffold(
