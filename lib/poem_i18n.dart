@@ -27,6 +27,10 @@ class PoemLocalizations {
       'grade.10': '10th Grade',
       'grade.11': '11th Grade',
       'grade.12': '12th Grade',
+      'change': 'Change a Poem',
+      'english': 'English',
+      'pinyin': 'Pinyin',
+      'answer': 'Answer',
     },
     'zh': {
       'title': '中国古诗',
@@ -44,6 +48,10 @@ class PoemLocalizations {
       'grade.10': '高一',
       'grade.11': '高二',
       'grade.12': '高三',
+      'change': '换一首',
+      'english': '英语',
+      'pinyin': '拼音',
+      'answer': '答案',
     },
   };
 
@@ -59,6 +67,22 @@ class PoemLocalizations {
 
   String getGrade(int num) {
     return _localizedValues[locale.languageCode]!['grade.$num']!;
+  }
+
+  String get change {
+    return _localizedValues[locale.languageCode]!['change']!;
+  }
+
+  String get english {
+    return _localizedValues[locale.languageCode]!['english']!;
+  }
+
+  String get pinyin {
+    return _localizedValues[locale.languageCode]!['pinyin']!;
+  }
+
+  String get answer {
+    return _localizedValues[locale.languageCode]!['answer']!;
   }
 }
 

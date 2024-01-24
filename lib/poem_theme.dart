@@ -233,6 +233,7 @@ final ColorScheme chineseStyle15 = ColorScheme.fromSeed(
   seedColor: Color(0xFFC07A6A), // 赭石
   primary: Color(0xFF9E655F),
   secondary: Color(0xFFE5E5E5), // 灰白
+  tertiary: Color(0xFF81B29A),
   secondaryContainer: Color(0xFFD4D4D4),
   surface: Color(0xFFF2F2F2),
   background: Color(0xFFFFFFFF),
@@ -243,4 +244,5 @@ final ColorScheme chineseStyle15 = ColorScheme.fromSeed(
   onBackground: Color(0xFF000000),
   onError: Color(0xFFFFFFFF),
   brightness: Brightness.light,
+  outline: Color(0xFFF9C74F),
 );
