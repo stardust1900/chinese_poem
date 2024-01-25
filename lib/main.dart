@@ -73,8 +73,9 @@ class _MyHomePageState extends State<MyHomePage> {
   final changeLocale;
   bool shownEn = false;
   bool showPinyin = false;
-  List<bool> checkList = [];
-
+  List<bool> checkList = List.filled(13, false);
+  bool simplifiedChinese = true; //简体中文
+  bool pinyinStyle1 = true; //拼音风格
   var poemJson;
 
 // 选中的诗
@@ -94,15 +95,21 @@ class _MyHomePageState extends State<MyHomePage> {
           // print(poemJson),
           setState(() {
             choosePoem = poemJson[Random().nextInt(poemJson.length)];
-            for (var p in choosePoem['paragraphs_cns']) {
-              for (var c in p.split("")) {
-                if (!isPunctuate(c)) {
-                  pickCharacters.add(c);
+            var paragraphsCns = choosePoem['paragraphs_cns'];
+            var paragraphsCnt = choosePoem['paragraphs_cnt'];
+
+            for (int i = 0; i < paragraphsCns.length; i++) {
+              var krctCns = paragraphsCns[i].split("");
+              var krctCnt = paragraphsCnt[i].split("");
+              for (int idx = 0; idx < krctCns.length; idx++) {
+                if (!isPunctuate(krctCns[idx])) {
+                  pickCharacters
+                      .add(Character(krctCns[idx], krctCnt[idx], '', ''));
                 }
               }
             }
             //初始化固定长度数组
-            rowsCharacters = []..length = choosePoem['paragraphs_cns'].length;
+            rowsCharacters = []..length = paragraphsCns.length;
             pickCharacters.shuffle();
           })
         });
@@ -116,7 +123,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget genButtons(context, colorScheme) {
-    return Wrap(children: [
+    return FittedBox(
+        child: Wrap(children: [
       IconButton(
         tooltip: PoemLocalizations.of(context).english,
         iconSize: 16,
@@ -161,7 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         },
       ),
-    ]);
+    ]));
   }
 
 // 生成标题
@@ -202,7 +210,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Visibility(
                 visible: showPinyin,
                 child: Text(
-                  c.pinyin1,
+                  pinyinStyle1 ? c.pinyin1 : c.pinyin2,
                   style: TextStyle(color: colorScheme.error),
                 )),
           ),
@@ -211,7 +219,8 @@ class _MyHomePageState extends State<MyHomePage> {
             height: 40,
             alignment: Alignment.center,
             color: colorScheme.secondary,
-            child: Text(c.txtCns, style: const TextStyle(fontSize: 25)),
+            child: Text(simplifiedChinese ? c.txtCns : c.txtCnt,
+                style: const TextStyle(fontSize: 25)),
           )
         ],
       ),
@@ -235,7 +244,7 @@ class _MyHomePageState extends State<MyHomePage> {
       Expanded(
           child: Column(children: [
         FittedBox(
-            child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           const SizedBox(
             width: 120,
             height: 60,
@@ -269,6 +278,7 @@ class _MyHomePageState extends State<MyHomePage> {
           paragraphsPy1[rowIdx],
           paragraphsPy2[rowIdx],
           paragraphsEn[rowIdx],
+          context,
           colorScheme));
     }
     return rows;
@@ -276,7 +286,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 //生成一行诗句
   Widget genParagraphRow(
-      rowIdx, rowCns, rowCnt, rowPy1, rowPy2, rowEn, colorScheme) {
+      rowIdx, rowCns, rowCnt, rowPy1, rowPy2, rowEn, context, colorScheme) {
     final kractsCns = rowCns.split("");
     final kractsCnt = rowCnt.split("");
     final pinyin1 = rowPy1.split(" ");
@@ -314,7 +324,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: Visibility(
                           visible: showPinyin,
                           child: Text(
-                            c.pinyin1,
+                            pinyinStyle1 ? c.pinyin1 : c.pinyin2,
                             style: TextStyle(color: colorScheme.error),
                           )),
                     ),
@@ -327,18 +337,20 @@ class _MyHomePageState extends State<MyHomePage> {
                         color: colorScheme.secondary,
                         child: Visibility(
                             visible: c.visibable,
-                            child: Text(c.txtCns,
+                            child: Text(simplifiedChinese ? c.txtCns : c.txtCnt,
                                 style: const TextStyle(fontSize: 25))),
                       );
                     },
                         // 当拖拽进入时，判断是否接受
                         onWillAccept: (s) {
-                      return s == c.txtCns;
+                      return s == c.txtCns || s == c.txtCnt;
                     }, onAccept: (s) {
                       setState(() {
                         rowsCharacters = rowsCharacters;
                         c.visibable = true;
-                        pickCharacters.remove(s);
+                        pickCharacters.remove(pickCharacters.firstWhere(
+                            (element) =>
+                                element.txtCns == s || element.txtCnt == s));
                         for (int r = 0; r < rowsCharacters.length; r++) {
                           for (int idx = 0;
                               idx < rowsCharacters[r].length;
@@ -352,9 +364,11 @@ class _MyHomePageState extends State<MyHomePage> {
                         showDialog(
                             context: context,
                             builder: (context) {
-                              return const AlertDialog(
-                                title: Text("恭喜你"),
-                                content: Text("拼接古诗成功！"),
+                              return AlertDialog(
+                                title: Text(PoemLocalizations.of(context)
+                                    .congratulations),
+                                content:
+                                    Text(PoemLocalizations.of(context).succeed),
                               );
                             });
                       });
@@ -400,10 +414,13 @@ class _MyHomePageState extends State<MyHomePage> {
     ]);
   }
 
+//生成选字区域
   Widget _pickArea(colorScheme) {
     List<Widget> dragList = [];
     for (int i = 0; i < pickCharacters.length; i++) {
-      var c = pickCharacters[i];
+      var c = simplifiedChinese
+          ? pickCharacters[i].txtCns
+          : pickCharacters[i].txtCnt;
       var drag = Draggable<String>(
         data: c,
         feedback: Container(
@@ -444,14 +461,14 @@ class _MyHomePageState extends State<MyHomePage> {
             scrollDirection: Axis.horizontal,
             // padding: const EdgeInsets.all(20.0),
             child: Container(
-              alignment: Alignment.bottomCenter,
+              alignment: Alignment.topCenter,
               color: colorScheme.background,
-              padding: const EdgeInsets.all(5.0),
+              padding: const EdgeInsets.all(1.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(5.0),
+                    padding: const EdgeInsets.all(3.0),
                     child: Wrap(
                       spacing: 3,
                       // runSpacing: 10,
@@ -460,7 +477,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   Padding(
-                      padding: const EdgeInsets.all(5.0),
+                      padding: const EdgeInsets.all(3.0),
                       child: Wrap(
                         spacing: 3,
                         // runSpacing: 10,
@@ -488,14 +505,33 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
 
-    var button = TextButton.icon(
-      onPressed: () => press(context),
-      icon: const Icon(Icons.translate),
-      label: const Text(""),
-    );
+    var buttonRow = FittedBox(
+        child: Row(
+      children: [
+        TextButton.icon(
+          onPressed: () => press(0, context),
+          icon: const Icon(Icons.translate),
+          label: Text(PoemLocalizations.of(context).language),
+        ),
+        TextButton.icon(
+          onPressed: () => press(1, context),
+          icon: const Icon(Icons.format_shapes),
+          label: simplifiedChinese
+              ? Text(PoemLocalizations.of(context).traditional)
+              : Text(PoemLocalizations.of(context).simplified),
+        ),
+        TextButton.icon(
+          onPressed: () => press(2, context),
+          icon: pinyinStyle1
+              ? const Icon(Icons.looks_one)
+              : const Icon(Icons.looks_two),
+          label: Text(PoemLocalizations.of(context).pinyinStyle),
+        )
+      ],
+    ));
+
     List<Widget> tileList = [];
     for (int i = 0; i < 13; i++) {
-      checkList.add(false);
       final tile = ListTile(
         title: Text(
           PoemLocalizations.of(context).getGrade(i),
@@ -514,11 +550,31 @@ class _MyHomePageState extends State<MyHomePage> {
     final drawerItems = ListView(
       children: [
         drawerHeader,
-        button,
+        buttonRow,
         ...tileList,
       ],
     );
     return drawerItems;
+  }
+
+  void press(type, context) {
+    if (0 == type) {
+      String currentLanguageCode =
+          PoemLocalizations.of(context).locale.languageCode;
+      if ("zh" == currentLanguageCode) {
+        changeLocale(const Locale('en', ''));
+      } else {
+        changeLocale(const Locale('zh', ''));
+      }
+    } else if (1 == type) {
+      setState(() {
+        simplifiedChinese = !simplifiedChinese;
+      });
+    } else if (2 == type) {
+      setState(() {
+        pinyinStyle1 = !pinyinStyle1;
+      });
+    }
   }
 
   @override
@@ -584,18 +640,42 @@ class _MyHomePageState extends State<MyHomePage> {
           setState(
             () {
               pickCharacters.clear();
-              choosePoem = poemJson[Random().nextInt(poemJson.length)];
-              for (var p in choosePoem['paragraphs_cns']) {
-                for (var c in p.split("")) {
-                  if (!isPunctuate(c)) {
-                    pickCharacters.add(c);
+              var checked = checkList.where((c) => c).toList();
+              var candidates = poemJson;
+              if (checked.isNotEmpty) {
+                candidates = poemJson.where((e) {
+                  if (checkList[0]) {
+                    if (e['is300'] == 1) {
+                      return true;
+                    }
+                  }
+
+                  if (checkList[e['grade']]) {
+                    return true;
+                  }
+
+                  return false;
+                }).toList();
+              }
+              choosePoem = candidates[Random().nextInt(candidates.length)];
+              var paragraphsCns = choosePoem['paragraphs_cns'];
+              var paragraphsCnt = choosePoem['paragraphs_cnt'];
+
+              for (int i = 0; i < paragraphsCns.length; i++) {
+                var krctCns = paragraphsCns[i].split("");
+                var krctCnt = paragraphsCnt[i].split("");
+                for (int idx = 0; idx < krctCns.length; idx++) {
+                  if (!isPunctuate(krctCns[idx])) {
+                    pickCharacters
+                        .add(Character(krctCns[idx], krctCnt[idx], '', ''));
                   }
                 }
               }
+
               pickCharacters.shuffle();
               rowsCharacters.clear();
               //初始化固定长度数组
-              rowsCharacters = []..length = choosePoem['paragraphs_cns'].length;
+              rowsCharacters = []..length = paragraphsCns.length;
             },
           )
         },
@@ -603,16 +683,6 @@ class _MyHomePageState extends State<MyHomePage> {
         child: const Icon(Icons.refresh),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
-  }
-
-  void press(context) {
-    String currentLanguageCode =
-        PoemLocalizations.of(context).locale.languageCode;
-    if ("zh" == currentLanguageCode) {
-      changeLocale(const Locale('en', ''));
-    } else {
-      changeLocale(const Locale('zh', ''));
-    }
   }
 }
 

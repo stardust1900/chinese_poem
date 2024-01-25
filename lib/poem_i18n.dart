@@ -12,7 +12,7 @@ class PoemLocalizations {
 
   static const _localizedValues = <String, Map<String, String>>{
     'en': {
-      'title': 'Chinese Poems',
+      'title': 'Chinese Poems Puzzle',
       'homePage': 'Chinese Poems Home Page',
       'grade.0': '300 Tang poems',
       'grade.1': '1st Grade',
@@ -31,9 +31,15 @@ class PoemLocalizations {
       'english': 'English',
       'pinyin': 'Pinyin',
       'answer': 'Answer',
+      'language': '中文',
+      'simplified': 'Simplified',
+      'traditional': 'Traditional',
+      'pinyin_style': 'Pinyin Style',
+      'congratulations': 'Congratulations',
+      'succeed': 'You made it!',
     },
     'zh': {
-      'title': '中国古诗',
+      'title': '拼拼古诗',
       'homePage': '中国古诗首页',
       'grade.0': '唐诗300首',
       'grade.1': '小学一年级',
@@ -52,6 +58,12 @@ class PoemLocalizations {
       'english': '英语',
       'pinyin': '拼音',
       'answer': '答案',
+      'language': 'English',
+      'simplified': '简体',
+      'traditional': '繁体',
+      'pinyin_style': '拼音风格',
+      'congratulations': '恭喜你',
+      'succeed': '拼接古诗成功！',
     },
   };
 
@@ -83,6 +95,30 @@ class PoemLocalizations {
 
   String get answer {
     return _localizedValues[locale.languageCode]!['answer']!;
+  }
+
+  String get language {
+    return _localizedValues[locale.languageCode]!['language']!;
+  }
+
+  String get simplified {
+    return _localizedValues[locale.languageCode]!['simplified']!;
+  }
+
+  String get traditional {
+    return _localizedValues[locale.languageCode]!['traditional']!;
+  }
+
+  String get pinyinStyle {
+    return _localizedValues[locale.languageCode]!['pinyin_style']!;
+  }
+
+  String get congratulations {
+    return _localizedValues[locale.languageCode]!['congratulations']!;
+  }
+
+  String get succeed {
+    return _localizedValues[locale.languageCode]!['succeed']!;
   }
 }
 

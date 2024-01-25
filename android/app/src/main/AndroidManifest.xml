@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="chinese_poems"
+        android:label="拼拼古诗"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
