@@ -30047,57 +30047,6 @@
         "is300": 0
     },
     {
-        "id": 581,
-        "cat_cns": null,
-        "dynasty_cns": "唐代",
-        "author_cns": "杜牧",
-        "author_py1": "dù mù",
-        "author_py2": "du4 mu4",
-        "title_cns": "泊秦淮",
-        "title_py1": "pō qín huái",
-        "title_py2": "po1 qin2 huai2",
-        "paragraphs_cns": [
-            "烟笼寒水月笼沙，",
-            "夜泊秦淮近酒家。",
-            "商女不知亡国恨，",
-            "隔江犹唱《后庭花》。"
-        ],
-        "paragraphs_py1": [
-            "yān lóng hán shuǐ yuè lóng shā ，",
-            "yè pō qín huái jìn jiǔ jiā 。",
-            "shāng nǚ bù zhī wáng guó hèn ，",
-            "gé jiāng yóu chàng 《 hòu tíng huā 》。"
-        ],
-        "paragraphs_py2": [
-            "yan1 long2 han2 shui3 yue4 long2 sha1 ，",
-            "ye4 po1 qin2 huai2 jin4 jiu3 jia1 。",
-            "shang1 nv3 bu4 zhi1 wang2 guo2 hen4 ，",
-            "ge2 jiang1 you2 chang4 《 hou4 ting2 hua1 》。"
-        ],
-        "cat_cnt": null,
-        "dynasty_cnt": "唐代",
-        "author_cnt": "杜牧",
-        "title_cnt": "泊秦淮",
-        "paragraphs_cnt": [
-            "煙籠寒水月籠沙，",
-            "夜泊秦淮近酒家。",
-            "商女不知亡國恨，",
-            "隔江猶唱《後庭花》。"
-        ],
-        "cat_en": null,
-        "dynasty_en": "Tang Dynasty",
-        "author_en": "Du Mu",
-        "title_en": "Po Qinhuai",
-        "paragraphs_en": [
-            "Smoke cage, cold water, moon cage, sand,",
-            "Mooring at night near a restaurant in Qinhuai.",
-            "Shang women do not know the hatred of losing their country,",
-            "Across the river, I still sing \"The Flower in the Courtyard\"."
-        ],
-        "grade": 7,
-        "is300": 0
-    },
-    {
         "id": 582,
         "cat_cns": null,
         "dynasty_cns": "宋代",
@@ -30590,7 +30539,10 @@
             "可汗大点兵，",
             "军书十二卷，",
             "卷卷有爷名。",
-            "阿爷无大儿，木兰无长兄，愿为市鞍马，从此替爷征。",
+            "阿爷无大儿，", 
+            "木兰无长兄，", 
+            "愿为市鞍马，", 
+            "从此替爷征。",
             "东市买骏马，",
             "西市买鞍鞯，",
             "南市买辔头，",
@@ -30629,7 +30581,10 @@
             "著我旧时裳。",
             "当窗理云鬓，",
             "对镜帖花黄。",
-            "出门看火伴，火伴皆惊忙：同行十二年，不知木兰是女郎。",
+            "出门看火伴，", 
+            "火伴皆惊忙：", 
+            "同行十二年，", 
+            "不知木兰是女郎。",
             "雄兔脚扑朔，",
             "雌兔眼迷离；",
             "双兔傍地走，",
@@ -30648,7 +30603,10 @@
             "kè hán dà diǎn bīng ，",
             "jūn shū shí èr juǎn ，",
             "juàn juàn yǒu yé míng 。",
-            "ā yé wú dà ér ， mù lán wú zhǎng xiōng ， yuàn wèi shì ān mǎ ， cóng cǐ tì yé zhēng 。",
+            "ā yé wú dà ér ，", 
+            "mù lán wú zhǎng xiōng ，", 
+            "yuàn wèi shì ān mǎ ，", 
+            "cóng cǐ tì yé zhēng 。",
             "dōng shì mǎi jùn mǎ ，",
             "xī shì mǎi ān jiān ，",
             "nán shì mǎi pèi tóu ，",
@@ -30687,7 +30645,10 @@
             "zhù wǒ jiù shí shang 。",
             "dāng chuāng lǐ yún bìn ，",
             "duì jìng tiē huā huáng 。",
-            "chū mén kàn huǒ bàn ， huǒ bàn jiē jīng máng ： tóng háng shí èr nián ， bù zhī mù lán shì nǚ láng 。",
+            "chū mén kàn huǒ bàn ，", 
+            "huǒ bàn jiē jīng máng ：", 
+            "tóng háng shí èr nián ，", 
+            "bù zhī mù lán shì nǚ láng 。",
             "xióng tù jiǎo pū shuò ，",
             "cí tù yǎn mí lí ；",
             "shuāng tù bàng dì zǒu ，",
@@ -30706,7 +30667,10 @@
             "ke4 han2 da4 dian3 bing1 ，",
             "jun1 shu1 shi2 er4 juan3 ，",
             "juan4 juan4 you3 ye2 ming2 。",
-            "a1 ye2 wu2 da4 er2 ， mu4 lan2 wu2 zhang3 xiong1 ， yuan4 wei4 shi4 an1 ma3 ， cong2 ci3 ti4 ye2 zheng1 。",
+            "a1 ye2 wu2 da4 er2 ，", 
+            "mu4 lan2 wu2 zhang3 xiong1 ，", 
+            "yuan4 wei4 shi4 an1 ma3 ，", 
+            "cong2 ci3 ti4 ye2 zheng1 。",
             "dong1 shi4 mai3 jun4 ma3 ，",
             "xi1 shi4 mai3 an1 jian1 ，",
             "nan2 shi4 mai3 pei4 tou2 ，",
@@ -30745,7 +30709,10 @@
             "zhu4 wo3 jiu4 shi2 shang 。",
             "dang1 chuang1 li3 yun2 bin4 ，",
             "dui4 jing4 tie1 hua1 huang2 。",
-            "chu1 men2 kan4 huo3 ban4 ， huo3 ban4 jie1 jing1 mang2 ： tong2 hang2 shi2 er4 nian2 ， bu4 zhi1 mu4 lan2 shi4 nv3 lang2 。",
+            "chu1 men2 kan4 huo3 ban4 ，", 
+            "huo3 ban4 jie1 jing1 mang2 ：", 
+            "tong2 hang2 shi2 er4 nian2 ，", 
+            "bu4 zhi1 mu4 lan2 shi4 nv3 lang2 。",
             "xiong2 tu4 jiao3 pu1 shuo4 ，",
             "ci2 tu4 yan3 mi2 li2 ；",
             "shuang1 tu4 bang4 di4 zou3 ，",
@@ -30768,7 +30735,10 @@
             "可汗大點兵，",
             "軍書十二卷，",
             "卷卷有爺名。",
-            "阿爺無大兒，木蘭無長兄，願為市鞍馬，從此替爺徵。",
+            "阿爺無大兒，", 
+            "木蘭無長兄，", 
+            "願為市鞍馬，", 
+            "從此替爺徵。",
             "東市買駿馬，",
             "西市買鞍韉，",
             "南市買轡頭，",
@@ -30807,7 +30777,10 @@
             "著我舊時裳。",
             "當窗理雲鬢，",
             "對鏡帖花黃。",
-            "出門看火伴，火伴皆驚忙：同行十二年，不知木蘭是女郎。",
+            "出門看火伴，", 
+            "火伴皆驚忙：", 
+            "同行十二年，", 
+            "不知木蘭是女郎。",
             "雄兔腳撲朔，",
             "雌兔眼迷離；",
             "雙兔傍地走，",
@@ -30830,7 +30803,10 @@
             "Khan's Great Troops,",
             "Twelve volumes of military books,",
             "The scroll has a grandfather's name.",
-            "My grandpa has no eldest son, and Mulan has no elder brother. I would like to be the Pommeled Horse of the city and levy for you from now on.",
+            "My grandpa has no eldest son, ", 
+            "and Mulan has no elder brother. ", 
+            "I would like to be the Pommeled Horse of the city ", 
+            "and levy for you from now on.",
             "Buying a Steed in Dongshi,",
             "Buying saddles in the West Market,",
             "Buy a bridle in Nanshi,",
@@ -30869,7 +30845,10 @@
             "Wearing my old clothes.",
             "When the window trims the temples,",
             "Mirror sticker flower yellow.",
-            "When I went out to see my companions, they were all surprised and busy: I had been with them for twelve years, but I didn't know Mulan was a girl.",
+            "When I went out to see my companions, ", 
+            "they were all surprised: ", 
+            "I had been with them for twelve years, ", 
+            "but I didn't know Mulan was a girl.",
             "The male rabbit's feet pounce on the Shuo,",
             "Female rabbit eyes blurred;",
             "Two rabbits walking on the ground,",
@@ -36533,7 +36512,7 @@
             "北极朝廷终不改，",
             "西山寇盗莫相侵。",
             "可怜后主还祠庙，",
-            "日暮聊为《梁甫吟》。"
+            "日暮聊为梁甫吟。"
         ],
         "paragraphs_py1": [
             "huā jìn gāo lóu shāng kè xīn ，",
@@ -36543,7 +36522,7 @@
             "běi jí cháo tíng zhōng bù gǎi ，",
             "xī shān kòu dào mò xiāng qīn 。",
             "kě lián hòu zhǔ hái cí miào ，",
-            "rì mù liáo wèi 《 liáng fǔ yín 》。"
+            "rì mù liáo wèi  liáng fǔ yín 。"
         ],
         "paragraphs_py2": [
             "hua1 jin4 gao1 lou2 shang1 ke4 xin1 ，",
@@ -36553,7 +36532,7 @@
             "bei3 ji2 chao2 ting2 zhong1 bu4 gai3 ，",
             "xi1 shan1 kou4 dao4 mo4 xiang1 qin1 。",
             "ke3 lian2 hou4 zhu3 hai2 ci2 miao4 ，",
-            "ri4 mu4 liao2 wei4 《 liang2 fu3 yin2 》。"
+            "ri4 mu4 liao2 wei4  liang2 fu3 yin2 。"
         ],
         "cat_cnt": null,
         "dynasty_cnt": "唐代",
@@ -36567,7 +36546,7 @@
             "北極朝廷終不改，",
             "西山寇盜莫相侵。",
             "可憐後主還祠廟，",
-            "日暮聊為《梁甫吟》。"
+            "日暮聊為梁甫吟。"
         ],
         "cat_en": null,
         "dynasty_en": "Tang Dynasty",
@@ -37840,7 +37819,7 @@
             "北极朝廷终不改，",
             "西山寇盗莫相侵。",
             "可怜后主还祠庙，",
-            "日暮聊为《梁甫吟》。"
+            "日暮聊为梁甫吟。"
         ],
         "paragraphs_py1": [
             "huā jìn gāo lóu shāng kè xīn ，",
@@ -37850,7 +37829,7 @@
             "běi jí cháo tíng zhōng bù gǎi ，",
             "xī shān kòu dào mò xiāng qīn 。",
             "kě lián hòu zhǔ hái cí miào ，",
-            "rì mù liáo wèi 《 liáng fǔ yín 》。"
+            "rì mù liáo wèi  liáng fǔ yín 。"
         ],
         "paragraphs_py2": [
             "hua1 jin4 gao1 lou2 shang1 ke4 xin1 ，",
@@ -37860,7 +37839,7 @@
             "bei3 ji2 chao2 ting2 zhong1 bu4 gai3 ，",
             "xi1 shan1 kou4 dao4 mo4 xiang1 qin1 。",
             "ke3 lian2 hou4 zhu3 hai2 ci2 miao4 ，",
-            "ri4 mu4 liao2 wei4 《 liang2 fu3 yin2 》。"
+            "ri4 mu4 liao2 wei4  liang2 fu3 yin2 。"
         ],
         "cat_cnt": null,
         "dynasty_cnt": "唐代",
@@ -37874,7 +37853,7 @@
             "北極朝廷終不改，",
             "西山寇盜莫相侵。",
             "可憐後主還祠廟，",
-            "日暮聊為《梁甫吟》。"
+            "日暮聊為梁甫吟。"
         ],
         "cat_en": null,
         "dynasty_en": "Tang Dynasty",

@@ -38844,7 +38844,7 @@ av(){return new A.ym(this.c,A.b0(13,!1,!1,t.y),[],[],B.m)}}
 A.ym.prototype={
 aP(){$.AE().a5Y("asset/datas/chinese_poems.json").bN(new A.abQ(this),t.am)
 this.bg()},
-a5B(a){return a==="\uff0c"||a==="\u3002"||a==="\uff1f"||a==="\uff01"||a==="\uff1b"},
+a5B(a){return a==="\uff0c"||a==="\u3002"||a==="\uff1f"||a==="\uff01"||a==="\uff1b"||a==="\uff1a"},
 Nt(a,b){var s,r,q=null,p=t.lQ,o=A.bB(a,B.a4,p)
 o.toString
 o=B.a8.h(0,o.a.gaZ()).h(0,"next")
@@ -38899,7 +38899,7 @@ Nv(a,b,c,d,e,f,a0,a1){var s,r,q,p,o,n,m,l=this,k=J.dB(b,""),j=J.dB(c,""),i=J.dB(
 if(g==null){g=A.a([],t.fd)
 for(s=J.aA(k),r=J.aA(j),q=J.aA(i),p=J.aA(h),o=0;o<s.gB(k);++o){n=s.h(k,o)
 m=new A.hn(n,r.h(j,o),q.h(i,o),p.h(h,o))
-m.f=n==="\uff0c"||n==="\u3002"||n==="\uff1f"||n==="\uff01"||n==="\uff1b"
+m.f=n==="\uff0c"||n==="\u3002"||n==="\uff1f"||n==="\uff01"||n==="\uff1b"||n==="\uff1a"
 g.push(m)}l.at[a]=g}s=A.a4(g).i("a8<1,h>")
 r=t.p
 return A.dI(A.a([A.eG(A.jD(A.a([A.nT(A.dI(A.a3(new A.a8(g,new A.abN(l,a1,a0),s),!0,s.i("aX.E")),B.P,B.dL,B.Q)),l.vi(f,a1)],r),B.P,B.a_,B.Q),1)],r),B.P,B.a_,B.Q)},
@@ -39040,7 +39040,7 @@ r=J.bU(i.Q,"paragraphs_cnt")
 for(h=J.aA(s),g=i.as,q=J.aA(r),p=0;p<h.gB(s);++p){o=J.dB(h.h(s,p),"")
 n=J.dB(q.h(r,p),"")
 for(m=J.aA(o),l=J.aA(n),k=0;k<m.gB(o);++k){j=m.h(o,k)
-if(!(j==="\uff0c"||j==="\u3002"||j==="\uff1f"||j==="\uff01"||j==="\uff1b"))g.push(new A.hn(m.h(o,k),l.h(n,k),"",""))}}q=[]
+if(!(j==="\uff0c"||j==="\u3002"||j==="\uff1f"||j==="\uff01"||j==="\uff1b"||j==="\uff1a"))g.push(new A.hn(m.h(o,k),l.h(n,k),"",""))}}q=[]
 B.b.sB(q,h.gB(s))
 i.at=q
 B.b.CH(g)},
@@ -39053,7 +39053,7 @@ A.abw.prototype={
 $0(){var s,r,q,p,o
 for(s=this.a,r=0;r<s.at.length;++r)for(q=0;p=s.at[r],q<p.length;++q){o=p[q]
 if(!o.geR()){p=o.gh2()
-p=!(p==="\uff0c"||p==="\u3002"||p==="\uff1f"||p==="\uff01"||p==="\uff1b")}else p=!1
+p=!(p==="\uff0c"||p==="\u3002"||p==="\uff1f"||p==="\uff01"||p==="\uff1b"||p==="\uff1a")}else p=!1
 if(p){o.seR(!0)
 p=s.as
 B.b.A(p,B.b.tV(p,new A.abt(o)))
@@ -39070,7 +39070,7 @@ A.abv.prototype={
 $0(){var s,r,q,p,o,n
 for(s=this.a,r=s.as,q=0;q<s.at.length;++q)for(p=0;o=s.at[q],p<o.length;++p){n=o[p]
 if(!n.geR()){o=n.gh2()
-o=!(o==="\uff0c"||o==="\u3002"||o==="\uff1f"||o==="\uff01"||o==="\uff1b")}else o=!1
+o=!(o==="\uff0c"||o==="\u3002"||o==="\uff1f"||o==="\uff01"||o==="\uff1b"||o==="\uff1a")}else o=!1
 if(o)if(B.eu.ut(5)===0){n.seR(!0)
 B.b.A(r,B.b.tV(r,new A.abs(n)))}}},
 $S:0}
@@ -39217,7 +39217,7 @@ n=J.bU(f.Q,"paragraphs_cnt")
 for(s=J.aA(o),r=J.aA(n),m=0;m<s.gB(o);++m){l=J.dB(s.h(o,m),"")
 k=J.dB(r.h(n,m),"")
 for(j=J.aA(l),i=J.aA(k),h=0;h<j.gB(l);++h){g=j.h(l,h)
-if(!(g==="\uff0c"||g==="\u3002"||g==="\uff1f"||g==="\uff01"||g==="\uff1b"))e.push(new A.hn(j.h(l,h),i.h(k,h),"",""))}}B.b.CH(e)
+if(!(g==="\uff0c"||g==="\u3002"||g==="\uff1f"||g==="\uff01"||g==="\uff1b"||g==="\uff1a"))e.push(new A.hn(j.h(l,h),i.h(k,h),"",""))}}B.b.CH(e)
 B.b.M(f.at)
 e=[]
 B.b.sB(e,s.gB(o))
