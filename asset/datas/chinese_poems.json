@@ -3556,7 +3556,7 @@
         "author_cns": "李白",
         "author_py1": "lǐ bái",
         "author_py2": "li3 bai2",
-        "title_cns": "子夜四时歌  春歌",
+        "title_cns": "子夜四时歌·春歌",
         "title_py1": "zi yè sì shí gē    chūn gē",
         "title_py2": "zi ye4 si4 shi2 ge1    chun1 ge1",
         "paragraphs_cns": [
@@ -3586,7 +3586,7 @@
         "cat_cnt": "樂府",
         "dynasty_cnt": "唐代",
         "author_cnt": "李白",
-        "title_cnt": "子夜四時歌  春歌",
+        "title_cnt": "子夜四時歌·春歌",
         "paragraphs_cnt": [
             "秦地羅敷女，",
             "采桑綠水邊。",
@@ -3617,7 +3617,7 @@
         "author_cns": "李白",
         "author_py1": "lǐ bái",
         "author_py2": "li3 bai2",
-        "title_cns": "子夜四时歌  夏歌",
+        "title_cns": "子夜四时歌·夏歌",
         "title_py1": "zi yè sì shí gē    xià gē",
         "title_py2": "zi ye4 si4 shi2 ge1    xia4 ge1",
         "paragraphs_cns": [
@@ -3647,7 +3647,7 @@
         "cat_cnt": "樂府",
         "dynasty_cnt": "唐代",
         "author_cnt": "李白",
-        "title_cnt": "子夜四時歌  夏歌",
+        "title_cnt": "子夜四時歌·夏歌",
         "paragraphs_cnt": [
             "鏡湖三百里，",
             "菡萏發荷花。",
@@ -3678,7 +3678,7 @@
         "author_cns": "李白",
         "author_py1": "lǐ bái",
         "author_py2": "li3 bai2",
-        "title_cns": "子夜四时歌  秋歌",
+        "title_cns": "子夜四时歌·秋歌",
         "title_py1": "zi yè sì shí gē    qiū gē",
         "title_py2": "zi ye4 si4 shi2 ge1    qiu1 ge1",
         "paragraphs_cns": [
@@ -3708,7 +3708,7 @@
         "cat_cnt": "樂府",
         "dynasty_cnt": "唐代",
         "author_cnt": "李白",
-        "title_cnt": "子夜四時歌  秋歌",
+        "title_cnt": "子夜四時歌·秋歌",
         "paragraphs_cnt": [
             "長安一片月，",
             "萬戶擣衣聲；",
@@ -3739,7 +3739,7 @@
         "author_cns": "李白",
         "author_py1": "lǐ bái",
         "author_py2": "li3 bai2",
-        "title_cns": "子夜四时歌  冬歌",
+        "title_cns": "子夜四时歌·冬歌",
         "title_py1": "zi yè sì shí gē    dōng gē",
         "title_py2": "zi ye4 si4 shi2 ge1    dong1 ge1",
         "paragraphs_cns": [
@@ -3769,7 +3769,7 @@
         "cat_cnt": "樂府",
         "dynasty_cnt": "唐代",
         "author_cnt": "李白",
-        "title_cnt": "子夜四時歌  冬歌",
+        "title_cnt": "子夜四時歌·冬歌",
         "paragraphs_cnt": [
             "明朝驛使發，",
             "一夜絮征袍。",
@@ -26844,8 +26844,8 @@
         "paragraphs_en": [
             "The water shines brightly and the sun shines brightly,",
             "The mountains are shrouded in strange clouds and rain.",
-            "To compare West Lake to West Lake,",
-            "Light makeup and heavy application are always suitable."
+            "For symbol of the Western Lake the Western maid you well may take,",
+            "whether adorned with white and rose or in unpainted grace she goes."
         ],
         "grade": 3,
         "is300": 0

@@ -37,6 +37,19 @@ class PoemLocalizations {
       'pinyin_style': 'Pinyin Style',
       'congratulations': 'Congratulations',
       'succeed': 'You made it!',
+      'next': 'Next',
+      'random': 'Random',
+      'about': 'About',
+      'aboutLine1':
+          'This is a jigsaw puzzle game for Chinese ancient poetry. You can check your mastery of Chinese characters and ancient poetry through the game, hoping to help beginners of Chinese characters and ancient poetry. If you are an expert in Chinese characters and ancient poetry, I also hope you can have fun from it.',
+      'aboutLine2':
+          'The data for 300 Tang poems comes from the website of the University of Virginia Library https://cti.lib.virginia.edu/frame.htm',
+      'aboutLine3':
+          'The data on ancient poetry in textbooks comes from https://github.com/chinese-poetry/huajianji ',
+      'aboutLine4':
+          'The pinyin of all Chinese characters is generated through pypinyin, and the English translation of ancient poems in textbooks is generated through Baidu Translate. There are many inaccuracies, for reference only.',
+      'aboutLine5':
+          'If you have any questions or suggestions about this application, please contact me. :)\n email:stardust1900@hotmail.com\n weibo:@君敕',
     },
     'zh': {
       'title': '拼拼古诗',
@@ -64,6 +77,18 @@ class PoemLocalizations {
       'pinyin_style': '拼音风格',
       'congratulations': '恭喜你',
       'succeed': '拼接古诗成功！',
+      'next': '下一个字',
+      'random': '随机显示',
+      'about': '关于',
+      'aboutLine1':
+          '这是一个中国古诗的拼图游戏，您可以通过游戏来检查自己对汉字和古诗的掌握程度，希望可以帮助初学汉字和初学古诗的人，如果你是汉字和古诗的专家也希望你可以从中获得乐趣。',
+      'aboutLine2':
+          '唐诗300首的数据来自维吉尼亚大学图书馆网站 https://cti.lib.virginia.edu/frame.htm',
+      'aboutLine3': '教科书中古诗的数据来自 https://github.com/chinese-poetry/huajianji ',
+      'aboutLine4':
+          '所有汉字的拼音是通过pypinyin生成的，教科书中古诗的英文翻译是通过百度翻译生成的，有很多不准确的地方，仅供参考。',
+      'aboutLine5':
+          '如果你对这个应用有什么问题或者建议，请联系我 :)\n email:stardust1900@hotmail.com\n 微博:@君敕',
     },
   };
 
@@ -119,6 +144,38 @@ class PoemLocalizations {
 
   String get succeed {
     return _localizedValues[locale.languageCode]!['succeed']!;
+  }
+
+  String get next {
+    return _localizedValues[locale.languageCode]!['next']!;
+  }
+
+  String get random {
+    return _localizedValues[locale.languageCode]!['random']!;
+  }
+
+  String get about {
+    return _localizedValues[locale.languageCode]!['about']!;
+  }
+
+  String get aboutLine1 {
+    return _localizedValues[locale.languageCode]!['aboutLine1']!;
+  }
+
+  String get aboutLine2 {
+    return _localizedValues[locale.languageCode]!['aboutLine2']!;
+  }
+
+  String get aboutLine3 {
+    return _localizedValues[locale.languageCode]!['aboutLine3']!;
+  }
+
+  String get aboutLine4 {
+    return _localizedValues[locale.languageCode]!['aboutLine4']!;
+  }
+
+  String get aboutLine5 {
+    return _localizedValues[locale.languageCode]!['aboutLine5']!;
   }
 }
 

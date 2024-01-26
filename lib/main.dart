@@ -76,6 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<bool> checkList = List.filled(13, false);
   bool simplifiedChinese = true; //简体中文
   bool pinyinStyle1 = true; //拼音风格
+  bool showAbout = false;
   var poemJson;
 
 // 选中的诗
@@ -126,29 +127,47 @@ class _MyHomePageState extends State<MyHomePage> {
     return FittedBox(
         child: Wrap(children: [
       IconButton(
-        tooltip: PoemLocalizations.of(context).english,
+        tooltip: PoemLocalizations.of(context).next,
         iconSize: 16,
-        icon: shownEn
-            ? Icon(Icons.sort_by_alpha_rounded, color: colorScheme.tertiary)
-            : Icon(Icons.sort_by_alpha, color: colorScheme.tertiary),
+        icon: const Icon(Icons.navigate_next),
+        //显示下一个字
         onPressed: () {
           setState(() {
-            shownEn = !shownEn;
+            for (int r = 0; r < rowsCharacters.length; r++) {
+              for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
+                final rc = rowsCharacters[r][idx];
+                if (!rc.visibable && !isPunctuate(rc.txtCns)) {
+                  rc.visibable = true;
+                  pickCharacters.remove(pickCharacters
+                      .firstWhere((element) => element.txtCns == rc.txtCns));
+                  return;
+                }
+              }
+            }
           });
         },
       ),
       IconButton(
-        tooltip: PoemLocalizations.of(context).pinyin,
+        tooltip: PoemLocalizations.of(context).random,
         iconSize: 16,
-        icon: showPinyin
-            ? Icon(
-                Icons.link_off,
-                color: colorScheme.error,
-              )
-            : Icon(Icons.link, color: colorScheme.error),
+        icon: const Icon(Icons.tune),
+        //随机显示一些字
         onPressed: () {
           setState(() {
-            showPinyin = !showPinyin;
+            for (int r = 0; r < rowsCharacters.length; r++) {
+              for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
+                final rc = rowsCharacters[r][idx];
+                if (!rc.visibable && !isPunctuate(rc.txtCns)) {
+                  //没显示的字有1/5的概率显示
+                  int r = Random().nextInt(5);
+                  if (r == 0) {
+                    rc.visibable = true;
+                    pickCharacters.remove(pickCharacters
+                        .firstWhere((element) => element.txtCns == rc.txtCns));
+                  }
+                }
+              }
+            }
           });
         },
       ),
@@ -245,10 +264,44 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(children: [
         FittedBox(
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const SizedBox(
-            width: 120,
-            height: 60,
-          ), //使用sizedbox定位位置
+          SizedBox(
+              width: 120,
+              height: 60,
+              child: Container(
+                alignment: Alignment.bottomRight,
+                child: FittedBox(
+                    child: Wrap(children: [
+                  IconButton(
+                    tooltip: PoemLocalizations.of(context).english,
+                    iconSize: 18,
+                    icon: shownEn
+                        ? Icon(Icons.explicit, color: colorScheme.tertiary)
+                        : Icon(Icons.explicit_outlined,
+                            color: colorScheme.tertiary),
+                    onPressed: () {
+                      setState(() {
+                        shownEn = !shownEn;
+                      });
+                    },
+                  ),
+                  IconButton(
+                    tooltip: PoemLocalizations.of(context).pinyin,
+                    iconSize: 18,
+                    icon: showPinyin
+                        ? Icon(
+                            Icons.fiber_pin,
+                            color: colorScheme.error,
+                          )
+                        : Icon(Icons.fiber_pin_outlined,
+                            color: colorScheme.error),
+                    onPressed: () {
+                      setState(() {
+                        showPinyin = !showPinyin;
+                      });
+                    },
+                  ),
+                ])),
+              )), //使用sizedbox定位位置
           ...krctList.map((c) => genCharacter(c, colorScheme)).toList(),
           Container(
               width: 120,
@@ -323,10 +376,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       alignment: Alignment.center,
                       child: Visibility(
                           visible: showPinyin,
-                          child: Text(
+                          child: FittedBox(
+                              child: Text(
                             pinyinStyle1 ? c.pinyin1 : c.pinyin2,
                             style: TextStyle(color: colorScheme.error),
-                          )),
+                          ))),
                     ),
                     DragTarget<String>(
                         builder: (context, candidateData, rejectedData) {
@@ -451,7 +505,7 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Widget> wrap2children = dragList.sublist(dragList.length ~/ 2);
     final ctrler = ScrollController(initialScrollOffset: 0);
     return Expanded(
-        flex: 1,
+        flex: 2,
         child: Scrollbar(
           scrollbarOrientation: ScrollbarOrientation.bottom,
           controller: ctrler,
@@ -492,7 +546,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
 // 生成抽屉菜单
-  Widget genDrawItems() {
+  Widget genDrawItems(colorScheme) {
     var drawerHeader = UserAccountsDrawerHeader(
       accountName: const Text(
         "",
@@ -503,7 +557,64 @@ class _MyHomePageState extends State<MyHomePage> {
       currentAccountPicture: CircleAvatar(
         child: Image.asset("asset/images/poem.png"),
       ),
+      onDetailsPressed: () {
+        setState(() {
+          showAbout = !showAbout;
+        });
+      },
     );
+
+    var about = Column(children: [
+      Row(children: [
+        Expanded(
+            child: Container(
+          padding: const EdgeInsets.all(2),
+          alignment: Alignment.topCenter,
+          // color: colorScheme.primary,
+          child: Text(PoemLocalizations.of(context).about),
+        ))
+      ]),
+      Row(children: [
+        Expanded(
+            child: Container(
+          padding: const EdgeInsets.all(2),
+          // color: colorScheme.primary,
+          child: Text(PoemLocalizations.of(context).aboutLine1),
+        ))
+      ]),
+      Row(children: [
+        Expanded(
+            child: Container(
+          padding: const EdgeInsets.all(2),
+          // color: colorScheme.primary,
+          child: Text(PoemLocalizations.of(context).aboutLine2),
+        ))
+      ]),
+      Row(children: [
+        Expanded(
+            child: Container(
+          padding: const EdgeInsets.all(2),
+          // color: colorScheme.primary,
+          child: Text(PoemLocalizations.of(context).aboutLine3),
+        ))
+      ]),
+      Row(children: [
+        Expanded(
+            child: Container(
+          padding: const EdgeInsets.all(2),
+          // color: colorScheme.primary,
+          child: Text(PoemLocalizations.of(context).aboutLine4),
+        ))
+      ]),
+      Row(children: [
+        Expanded(
+            child: Container(
+          padding: const EdgeInsets.all(2),
+          // color: colorScheme.primary,
+          child: Text(PoemLocalizations.of(context).aboutLine5),
+        ))
+      ])
+    ]);
 
     var buttonRow = FittedBox(
         child: Row(
@@ -547,13 +658,17 @@ class _MyHomePageState extends State<MyHomePage> {
       );
       tileList.add(tile);
     }
-    final drawerItems = ListView(
-      children: [
-        drawerHeader,
-        buttonRow,
-        ...tileList,
-      ],
-    );
+    final drawerItems = showAbout
+        ? ListView(
+            children: [drawerHeader, about],
+          )
+        : ListView(
+            children: [
+              drawerHeader,
+              buttonRow,
+              ...tileList,
+            ],
+          );
     return drawerItems;
   }
 
@@ -588,101 +703,107 @@ class _MyHomePageState extends State<MyHomePage> {
     String titleText = PoemLocalizations.of(context).title;
     final ctrler = ScrollController(initialScrollOffset: 0);
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: colorScheme.inversePrimary,
-        title: Text(titleText),
-        // leading: Builder(builder: (context) {
-        //   return IconButton(
-        //     icon: const Icon(Icons.dashboard, color: Colors.white), //自定义图标
-        //     onPressed: () {
-        //       // 打开抽屉菜单
-        //       Scaffold.of(context).openDrawer();
-        //     },
-        //   );
-        // }),
-      ),
-      // drawer: PoemDrawer(changeLocale: changeLocale),
-      drawer: Drawer(
-        child: genDrawItems(),
-      ),
-      body: Container(
-          padding: EdgeInsets.all(2),
-          child: Flex(
-            direction: Axis.vertical,
-            children: [
-              Expanded(
-                  flex: 4,
-                  child: Scrollbar(
-                      controller: ctrler,
-                      scrollbarOrientation: ScrollbarOrientation.right,
-                      child: SingleChildScrollView(
-                          controller: ctrler,
-                          scrollDirection: Axis.vertical,
-                          padding: const EdgeInsets.all(8.0),
-                          child: Wrap(spacing: 5, children: [
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                // genButtons(colorScheme),
-                                genTitle(colorScheme),
-                                genAuthor(context, colorScheme),
-                                ...genParagraphs(context, colorScheme)
-                              ],
-                            ),
-                          ])))),
-              _pickArea(colorScheme),
-            ],
-          )),
+        appBar: AppBar(
+          backgroundColor: colorScheme.inversePrimary,
+          title: Text(titleText),
+          // leading: Builder(builder: (context) {
+          //   return IconButton(
+          //     icon: const Icon(Icons.dashboard, color: Colors.white), //自定义图标
+          //     onPressed: () {
+          //       // 打开抽屉菜单
+          //       Scaffold.of(context).openDrawer();
+          //     },
+          //   );
+          // }),
+        ),
+        // drawer: PoemDrawer(changeLocale: changeLocale),
+        drawer: Drawer(
+          child: genDrawItems(colorScheme),
+        ),
+        body: Container(
+            padding: EdgeInsets.all(2),
+            child: Flex(
+              direction: Axis.vertical,
+              children: [
+                Expanded(
+                    flex: 2,
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          genTitle(colorScheme),
+                          genAuthor(context, colorScheme),
+                        ])),
+                Expanded(
+                    flex: 6,
+                    child: Scrollbar(
+                        controller: ctrler,
+                        scrollbarOrientation: ScrollbarOrientation.right,
+                        child: SingleChildScrollView(
+                            controller: ctrler,
+                            scrollDirection: Axis.vertical,
+                            padding: const EdgeInsets.all(8.0),
+                            child: Wrap(spacing: 5, children: [
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  ...genParagraphs(context, colorScheme)
+                                ],
+                              ),
+                            ])))),
+                _pickArea(colorScheme),
+              ],
+            )),
+        floatingActionButton: SizedBox(
+          width: 25,
+          height: 25,
+          child: FloatingActionButton(
+            mini: true,
+            onPressed: () => {
+              setState(
+                () {
+                  pickCharacters.clear();
+                  var checked = checkList.where((c) => c).toList();
+                  var candidates = poemJson;
+                  if (checked.isNotEmpty) {
+                    candidates = poemJson.where((e) {
+                      if (checkList[0]) {
+                        if (e['is300'] == 1) {
+                          return true;
+                        }
+                      }
 
-      floatingActionButton: FloatingActionButton(
-        mini: true,
-        onPressed: () => {
-          setState(
-            () {
-              pickCharacters.clear();
-              var checked = checkList.where((c) => c).toList();
-              var candidates = poemJson;
-              if (checked.isNotEmpty) {
-                candidates = poemJson.where((e) {
-                  if (checkList[0]) {
-                    if (e['is300'] == 1) {
-                      return true;
+                      if (checkList[e['grade']]) {
+                        return true;
+                      }
+
+                      return false;
+                    }).toList();
+                  }
+                  choosePoem = candidates[Random().nextInt(candidates.length)];
+                  var paragraphsCns = choosePoem['paragraphs_cns'];
+                  var paragraphsCnt = choosePoem['paragraphs_cnt'];
+
+                  for (int i = 0; i < paragraphsCns.length; i++) {
+                    var krctCns = paragraphsCns[i].split("");
+                    var krctCnt = paragraphsCnt[i].split("");
+                    for (int idx = 0; idx < krctCns.length; idx++) {
+                      if (!isPunctuate(krctCns[idx])) {
+                        pickCharacters
+                            .add(Character(krctCns[idx], krctCnt[idx], '', ''));
+                      }
                     }
                   }
-
-                  if (checkList[e['grade']]) {
-                    return true;
-                  }
-
-                  return false;
-                }).toList();
-              }
-              choosePoem = candidates[Random().nextInt(candidates.length)];
-              var paragraphsCns = choosePoem['paragraphs_cns'];
-              var paragraphsCnt = choosePoem['paragraphs_cnt'];
-
-              for (int i = 0; i < paragraphsCns.length; i++) {
-                var krctCns = paragraphsCns[i].split("");
-                var krctCnt = paragraphsCnt[i].split("");
-                for (int idx = 0; idx < krctCns.length; idx++) {
-                  if (!isPunctuate(krctCns[idx])) {
-                    pickCharacters
-                        .add(Character(krctCns[idx], krctCnt[idx], '', ''));
-                  }
-                }
-              }
-
-              pickCharacters.shuffle();
-              rowsCharacters.clear();
-              //初始化固定长度数组
-              rowsCharacters = []..length = paragraphsCns.length;
+                  pickCharacters.shuffle();
+                  rowsCharacters.clear();
+                  //初始化固定长度数组
+                  rowsCharacters = []..length = paragraphsCns.length;
+                },
+              )
             },
-          )
-        },
-        tooltip: PoemLocalizations.of(context).change,
-        child: const Icon(Icons.refresh),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+            tooltip: PoemLocalizations.of(context).change,
+            child: const Icon(Icons.refresh),
+          ), // This trailing comma makes auto-formatting nicer for build methods.
+        ));
   }
 }
 
