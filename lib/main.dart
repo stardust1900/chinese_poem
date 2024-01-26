@@ -508,32 +508,33 @@ class _MyHomePageState extends State<MyHomePage> {
         flex: 2,
         child: Scrollbar(
           scrollbarOrientation: ScrollbarOrientation.bottom,
+          thumbVisibility: true,
           controller: ctrler,
           // 显示进度条
           child: SingleChildScrollView(
             controller: ctrler,
             scrollDirection: Axis.horizontal,
-            // padding: const EdgeInsets.all(20.0),
+            // padding: const EdgeInsets.all(5.0),
             child: Container(
               alignment: Alignment.topCenter,
-              color: colorScheme.background,
-              padding: const EdgeInsets.all(1.0),
+              // color: colorScheme.primary,
+              padding: const EdgeInsets.all(5.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(3.0),
+                    padding: const EdgeInsets.all(1.0),
                     child: Wrap(
-                      spacing: 3,
+                      spacing: 5,
                       // runSpacing: 10,
                       //动态创建一个List<Widget>
                       children: wrap1children,
                     ),
                   ),
                   Padding(
-                      padding: const EdgeInsets.all(3.0),
+                      padding: const EdgeInsets.all(15.0),
                       child: Wrap(
-                        spacing: 3,
+                        spacing: 5,
                         // runSpacing: 10,
                         //动态创建一个List<Widget>
                         children: wrap2children,
@@ -726,7 +727,7 @@ class _MyHomePageState extends State<MyHomePage> {
               direction: Axis.vertical,
               children: [
                 Expanded(
-                    flex: 2,
+                    flex: 3,
                     child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
