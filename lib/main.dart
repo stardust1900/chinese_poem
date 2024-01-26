@@ -120,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   //检查是不是标点符号
   bool isPunctuate(String s) {
-    return s == '，' || s == '。' || s == '？' || s == '！' || s == '；';
+    return s == '，' || s == '。' || s == '？' || s == '！' || s == '；' || s == "：";
   }
 
   Widget genButtons(context, colorScheme) {
