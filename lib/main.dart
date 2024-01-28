@@ -128,7 +128,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Wrap(children: [
       IconButton(
         tooltip: PoemLocalizations.of(context).next,
-        iconSize: 16,
+        // iconSize: 16,
         icon: const Icon(Icons.navigate_next),
         //显示下一个字
         onPressed: () {
@@ -149,7 +149,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       IconButton(
         tooltip: PoemLocalizations.of(context).random,
-        iconSize: 16,
+        // iconSize: 16,
         icon: const Icon(Icons.tune),
         //随机显示一些字
         onPressed: () {
@@ -173,7 +173,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       IconButton(
         tooltip: PoemLocalizations.of(context).answer,
-        iconSize: 16,
+        // iconSize: 16,
         icon: Icon(Icons.lightbulb_circle, color: colorScheme.outline),
         onPressed: () {
           setState(() {
@@ -273,7 +273,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Wrap(children: [
                   IconButton(
                     tooltip: PoemLocalizations.of(context).english,
-                    iconSize: 18,
+                    // iconSize: 18,
                     icon: shownEn
                         ? Icon(Icons.explicit, color: colorScheme.tertiary)
                         : Icon(Icons.explicit_outlined,
@@ -286,7 +286,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   IconButton(
                     tooltip: PoemLocalizations.of(context).pinyin,
-                    iconSize: 18,
+                    // iconSize: 18,
                     icon: showPinyin
                         ? Icon(
                             Icons.fiber_pin,
