@@ -37,9 +37,10 @@ class PoemLocalizations {
       'pinyin_style': 'Pinyin Style',
       'congratulations': 'Congratulations',
       'succeed': 'You made it!',
-      'next': 'Next',
-      'random': 'Random',
+      'next': 'Next Charactor',
+      'random': 'Randomly display some Charactors',
       'about': 'About',
+      'pick': 'Drag characters to the correct position',
       'aboutLine1':
           'This is a jigsaw puzzle game for Chinese ancient poetry. You can check your mastery of Chinese characters and ancient poetry through the game, hoping to help beginners of Chinese characters and ancient poetry. If you are an expert in Chinese characters and ancient poetry, I also hope you can have fun from it.',
       'aboutLine2':
@@ -78,8 +79,9 @@ class PoemLocalizations {
       'congratulations': '恭喜你',
       'succeed': '拼接古诗成功！',
       'next': '下一个字',
-      'random': '随机显示',
+      'random': '随机显示一些字',
       'about': '关于',
+      'pick': '把汉字拖到正确位置',
       'aboutLine1':
           '这是一个中国古诗的拼图游戏，您可以通过游戏来检查自己对汉字和古诗的掌握程度，希望可以帮助初学汉字和初学古诗的人，如果你是汉字和古诗的专家也希望你可以从中获得乐趣。',
       'aboutLine2':
@@ -156,6 +158,10 @@ class PoemLocalizations {
 
   String get about {
     return _localizedValues[locale.languageCode]!['about']!;
+  }
+
+  String get pick {
+    return _localizedValues[locale.languageCode]!['pick']!;
   }
 
   String get aboutLine1 {

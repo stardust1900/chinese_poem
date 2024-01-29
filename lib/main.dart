@@ -1,12 +1,14 @@
 import 'dart:convert';
-import 'dart:math';
+import 'dart:math' hide log;
 import 'dart:ui';
-
+import 'dart:developer';
 import 'package:chinese_poems/poem_i18n.dart';
 import 'package:chinese_poems/poem_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:showcaseview/showcaseview.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // import 'i18n_demo.dart';
 
 void main() {
@@ -48,7 +50,30 @@ class _PoemAppState extends State<PoemApp> {
         colorScheme: chineseStyle15,
         useMaterial3: true,
       ),
-      home: MyHomePage(changeLocale: (locale) => _changeLocale(locale)),
+      // home: MyHomePage(changeLocale: (locale) => _changeLocale(locale)),
+      home: Scaffold(
+        body: ShowCaseWidget(
+          onStart: (index, key) {
+            log('onStart: $index, $key');
+          },
+          onComplete: (index, key) {
+            log('onComplete: $index, $key');
+            if (index == 4) {
+              SystemChrome.setSystemUIOverlayStyle(
+                SystemUiOverlayStyle.light.copyWith(
+                  statusBarIconBrightness: Brightness.dark,
+                  statusBarColor: Colors.white,
+                ),
+              );
+            }
+          },
+          blurValue: 1,
+          builder: Builder(
+              builder: (context) =>
+                  MyHomePage(changeLocale: (locale) => _changeLocale(locale))),
+          autoPlayDelay: const Duration(seconds: 3),
+        ),
+      ),
     );
   }
 
@@ -70,6 +95,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final GlobalKey _one = GlobalKey();
+  final GlobalKey _two = GlobalKey();
+  final GlobalKey _three = GlobalKey();
+  final GlobalKey _four = GlobalKey();
+  final GlobalKey _five = GlobalKey();
+  final GlobalKey _six = GlobalKey();
+  final GlobalKey _seven = GlobalKey();
+
   final changeLocale;
   bool shownEn = false;
   bool showPinyin = false;
@@ -86,10 +119,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   var rowsCharacters = [];
 
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+
   _MyHomePageState(this.changeLocale);
 
   @override
   void initState() {
+    log("initState begin");
     // int rInt;
     rootBundle.loadString('asset/datas/chinese_poems.json').then((res) => {
           poemJson = jsonDecode(res),
@@ -116,79 +152,31 @@ class _MyHomePageState extends State<MyHomePage> {
         });
 
     super.initState();
+
+    _prefs.then((SharedPreferences prefs) {
+      bool showcaseview = prefs.getBool('showcaseview') ?? true;
+      log("showcaseview: $showcaseview");
+      if (showcaseview) {
+        prefs.setBool('showcaseview', !showcaseview);
+        //showcaseview操作指引
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => ShowCaseWidget.of(context)
+              .startShowCase([_one, _two, _three, _four, _five, _six, _seven]),
+        );
+      }
+    });
   }
 
   //检查是不是标点符号
   bool isPunctuate(String s) {
-    return s == '，' || s == '。' || s == '？' || s == '！' || s == '；' || s == "：";
-  }
-
-  Widget genButtons(context, colorScheme) {
-    return FittedBox(
-        child: Wrap(children: [
-      IconButton(
-        tooltip: PoemLocalizations.of(context).next,
-        // iconSize: 16,
-        icon: const Icon(Icons.navigate_next),
-        //显示下一个字
-        onPressed: () {
-          setState(() {
-            for (int r = 0; r < rowsCharacters.length; r++) {
-              for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
-                final rc = rowsCharacters[r][idx];
-                if (!rc.visibable && !isPunctuate(rc.txtCns)) {
-                  rc.visibable = true;
-                  pickCharacters.remove(pickCharacters
-                      .firstWhere((element) => element.txtCns == rc.txtCns));
-                  return;
-                }
-              }
-            }
-          });
-        },
-      ),
-      IconButton(
-        tooltip: PoemLocalizations.of(context).random,
-        // iconSize: 16,
-        icon: const Icon(Icons.tune),
-        //随机显示一些字
-        onPressed: () {
-          setState(() {
-            for (int r = 0; r < rowsCharacters.length; r++) {
-              for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
-                final rc = rowsCharacters[r][idx];
-                if (!rc.visibable && !isPunctuate(rc.txtCns)) {
-                  //没显示的字有1/5的概率显示
-                  int r = Random().nextInt(5);
-                  if (r == 0) {
-                    rc.visibable = true;
-                    pickCharacters.remove(pickCharacters
-                        .firstWhere((element) => element.txtCns == rc.txtCns));
-                  }
-                }
-              }
-            }
-          });
-        },
-      ),
-      IconButton(
-        tooltip: PoemLocalizations.of(context).answer,
-        // iconSize: 16,
-        icon: Icon(Icons.lightbulb_circle, color: colorScheme.outline),
-        onPressed: () {
-          setState(() {
-            for (int r = 0; r < rowsCharacters.length; r++) {
-              for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
-                if (!rowsCharacters[r][idx].visibable) {
-                  rowsCharacters[r][idx].visibable = true;
-                }
-              }
-            }
-            pickCharacters.clear();
-          });
-        },
-      ),
-    ]));
+    return s == '，' ||
+        s == '。' ||
+        s == '？' ||
+        s == '！' ||
+        s == '；' ||
+        s == "：" ||
+        s == "、" ||
+        s == "·";
   }
 
 // 生成标题
@@ -262,16 +250,22 @@ class _MyHomePageState extends State<MyHomePage> {
     return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
       Expanded(
           child: Column(children: [
-        FittedBox(
-            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          SizedBox(
-              width: 120,
-              height: 60,
-              child: Container(
-                alignment: Alignment.bottomRight,
-                child: FittedBox(
-                    child: Wrap(children: [
-                  IconButton(
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Container(
+            width: 120,
+            height: 60,
+            alignment: Alignment.bottomRight,
+            child: FittedBox(
+                child: Wrap(children: [
+              Showcase(
+                  key: _one,
+                  description: PoemLocalizations.of(context).english,
+                  descriptionAlignment: TextAlign.center,
+                  // tooltipPadding: EdgeInsets.all(100),
+                  // onBarrierClick: () => debugPrint('Barrier clicked'),
+                  child: GestureDetector(
+                      // onTap: () => debugPrint('menu button clicked'),
+                      child: IconButton(
                     tooltip: PoemLocalizations.of(context).english,
                     // iconSize: 18,
                     icon: shownEn
@@ -283,8 +277,15 @@ class _MyHomePageState extends State<MyHomePage> {
                         shownEn = !shownEn;
                       });
                     },
-                  ),
-                  IconButton(
+                  ))),
+              Showcase(
+                  key: _two,
+                  description: PoemLocalizations.of(context).pinyin,
+                  disableDefaultTargetGestures: true,
+                  // onBarrierClick: () => debugPrint('Barrier clicked'),
+                  child: GestureDetector(
+                      // onTap: () => debugPrint('menu button clicked'),
+                      child: IconButton(
                     tooltip: PoemLocalizations.of(context).pinyin,
                     // iconSize: 18,
                     icon: showPinyin
@@ -299,20 +300,202 @@ class _MyHomePageState extends State<MyHomePage> {
                         showPinyin = !showPinyin;
                       });
                     },
-                  ),
-                ])),
-              )), //使用sizedbox定位位置
+                  ))),
+            ])),
+          ),
           ...krctList.map((c) => genCharacter(c, colorScheme)).toList(),
           Container(
               width: 120,
               height: 60,
               alignment: Alignment.bottomRight,
               // color: colorScheme.secondary,
-              child: genButtons(context, colorScheme)),
-        ])),
+              child: FittedBox(
+                  child: Wrap(children: [
+                Showcase(
+                    key: _three,
+                    description: PoemLocalizations.of(context).next,
+                    disableDefaultTargetGestures: true,
+                    // onBarrierClick: () => debugPrint('Barrier clicked'),
+                    child: GestureDetector(
+                        // onTap: () => debugPrint('menu button clicked'),
+                        child: IconButton(
+                      tooltip: PoemLocalizations.of(context).next,
+                      // iconSize: 16,
+                      icon: const Icon(Icons.navigate_next),
+                      //显示下一个字
+                      onPressed: () {
+                        setState(() {
+                          for (int r = 0; r < rowsCharacters.length; r++) {
+                            for (int idx = 0;
+                                idx < rowsCharacters[r].length;
+                                idx++) {
+                              final rc = rowsCharacters[r][idx];
+                              if (!rc.visibable && !isPunctuate(rc.txtCns)) {
+                                rc.visibable = true;
+                                pickCharacters.remove(pickCharacters.firstWhere(
+                                    (element) => element.txtCns == rc.txtCns));
+                                return;
+                              }
+                            }
+                          }
+                        });
+                      },
+                    ))),
+                Showcase(
+                    key: _four,
+                    description: PoemLocalizations.of(context).random,
+                    disableDefaultTargetGestures: true,
+                    // onBarrierClick: () => debugPrint('Barrier clicked'),
+                    child: GestureDetector(
+                        // onTap: () => debugPrint('menu button clicked'),
+                        child: IconButton(
+                      tooltip: PoemLocalizations.of(context).random,
+                      // iconSize: 16,
+                      icon: const Icon(Icons.tune),
+                      //随机显示一些字
+                      onPressed: () {
+                        setState(() {
+                          for (int r = 0; r < rowsCharacters.length; r++) {
+                            for (int idx = 0;
+                                idx < rowsCharacters[r].length;
+                                idx++) {
+                              final rc = rowsCharacters[r][idx];
+                              if (!rc.visibable && !isPunctuate(rc.txtCns)) {
+                                //没显示的字有1/5的概率显示
+                                int r = Random().nextInt(5);
+                                if (r == 0) {
+                                  rc.visibable = true;
+                                  pickCharacters.remove(
+                                      pickCharacters.firstWhere((element) =>
+                                          element.txtCns == rc.txtCns));
+                                }
+                              }
+                            }
+                          }
+                        });
+                      },
+                    ))),
+                Showcase(
+                    key: _five,
+                    description: PoemLocalizations.of(context).answer,
+                    disableDefaultTargetGestures: true,
+                    // onBarrierClick: () => debugPrint('Barrier clicked'),
+                    child: GestureDetector(
+                        // onTap: () => debugPrint('menu button clicked'),
+                        child: IconButton(
+                      tooltip: PoemLocalizations.of(context).answer,
+                      // iconSize: 16,
+                      icon: Icon(Icons.lightbulb_circle,
+                          color: colorScheme.outline),
+                      onPressed: () {
+                        setState(() {
+                          for (int r = 0; r < rowsCharacters.length; r++) {
+                            for (int idx = 0;
+                                idx < rowsCharacters[r].length;
+                                idx++) {
+                              if (!rowsCharacters[r][idx].visibable) {
+                                rowsCharacters[r][idx].visibable = true;
+                              }
+                            }
+                          }
+                          pickCharacters.clear();
+                        });
+                      },
+                    ))),
+              ]))),
+        ]),
         genEnRow(authorEn, colorScheme)
       ]))
     ]);
+  }
+
+  Widget genButtons(context, colorScheme) {
+    return FittedBox(
+        child: Wrap(children: [
+      Showcase(
+          key: _three,
+          description: PoemLocalizations.of(context).next,
+          disableDefaultTargetGestures: true,
+          // onBarrierClick: () => debugPrint('Barrier clicked'),
+          child: GestureDetector(
+              // onTap: () => debugPrint('menu button clicked'),
+              child: IconButton(
+            tooltip: PoemLocalizations.of(context).next,
+            // iconSize: 16,
+            icon: const Icon(Icons.navigate_next),
+            //显示下一个字
+            onPressed: () {
+              setState(() {
+                for (int r = 0; r < rowsCharacters.length; r++) {
+                  for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
+                    final rc = rowsCharacters[r][idx];
+                    if (!rc.visibable && !isPunctuate(rc.txtCns)) {
+                      rc.visibable = true;
+                      pickCharacters.remove(pickCharacters.firstWhere(
+                          (element) => element.txtCns == rc.txtCns));
+                      return;
+                    }
+                  }
+                }
+              });
+            },
+          ))),
+      Showcase(
+          key: _four,
+          description: PoemLocalizations.of(context).random,
+          disableDefaultTargetGestures: true,
+          // onBarrierClick: () => debugPrint('Barrier clicked'),
+          child: GestureDetector(
+              // onTap: () => debugPrint('menu button clicked'),
+              child: IconButton(
+            tooltip: PoemLocalizations.of(context).random,
+            // iconSize: 16,
+            icon: const Icon(Icons.tune),
+            //随机显示一些字
+            onPressed: () {
+              setState(() {
+                for (int r = 0; r < rowsCharacters.length; r++) {
+                  for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
+                    final rc = rowsCharacters[r][idx];
+                    if (!rc.visibable && !isPunctuate(rc.txtCns)) {
+                      //没显示的字有1/5的概率显示
+                      int r = Random().nextInt(5);
+                      if (r == 0) {
+                        rc.visibable = true;
+                        pickCharacters.remove(pickCharacters.firstWhere(
+                            (element) => element.txtCns == rc.txtCns));
+                      }
+                    }
+                  }
+                }
+              });
+            },
+          ))),
+      Showcase(
+          key: _five,
+          description: PoemLocalizations.of(context).answer,
+          disableDefaultTargetGestures: true,
+          // onBarrierClick: () => debugPrint('Barrier clicked'),
+          child: GestureDetector(
+              // onTap: () => debugPrint('menu button clicked'),
+              child: IconButton(
+            tooltip: PoemLocalizations.of(context).answer,
+            // iconSize: 16,
+            icon: Icon(Icons.lightbulb_circle, color: colorScheme.outline),
+            onPressed: () {
+              setState(() {
+                for (int r = 0; r < rowsCharacters.length; r++) {
+                  for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
+                    if (!rowsCharacters[r][idx].visibable) {
+                      rowsCharacters[r][idx].visibable = true;
+                    }
+                  }
+                }
+                pickCharacters.clear();
+              });
+            },
+          ))),
+    ]));
   }
 
 // 生成诗句
@@ -515,33 +698,40 @@ class _MyHomePageState extends State<MyHomePage> {
             controller: ctrler,
             scrollDirection: Axis.horizontal,
             // padding: const EdgeInsets.all(5.0),
-            child: Container(
-              alignment: Alignment.topCenter,
-              // color: colorScheme.primary,
-              padding: const EdgeInsets.all(5.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(1.0),
-                    child: Wrap(
-                      spacing: 5,
-                      // runSpacing: 10,
-                      //动态创建一个List<Widget>
-                      children: wrap1children,
-                    ),
+            child: Showcase(
+                key: _six,
+                description: PoemLocalizations.of(context).pick,
+                disableDefaultTargetGestures: true,
+                // onBarrierClick: () => debugPrint('Barrier clicked'),
+                child: GestureDetector(
+                    // onTap: () => debugPrint('menu button clicked'),
+                    child: Container(
+                  alignment: Alignment.topCenter,
+                  // color: colorScheme.primary,
+                  padding: const EdgeInsets.all(5.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(1.0),
+                        child: Wrap(
+                          spacing: 5,
+                          // runSpacing: 10,
+                          //动态创建一个List<Widget>
+                          children: wrap1children,
+                        ),
+                      ),
+                      Padding(
+                          padding: const EdgeInsets.all(15.0),
+                          child: Wrap(
+                            spacing: 5,
+                            // runSpacing: 10,
+                            //动态创建一个List<Widget>
+                            children: wrap2children,
+                          ))
+                    ],
                   ),
-                  Padding(
-                      padding: const EdgeInsets.all(15.0),
-                      child: Wrap(
-                        spacing: 5,
-                        // runSpacing: 10,
-                        //动态创建一个List<Widget>
-                        children: wrap2children,
-                      ))
-                ],
-              ),
-            ),
+                ))),
           ),
         ));
   }
@@ -722,7 +912,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: genDrawItems(colorScheme),
         ),
         body: Container(
-            padding: EdgeInsets.all(2),
+            padding: EdgeInsets.all(1),
             child: Flex(
               direction: Axis.vertical,
               children: [
@@ -755,55 +945,63 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             )),
         floatingActionButton: SizedBox(
-          width: 25,
-          height: 25,
-          child: FloatingActionButton(
-            mini: true,
-            onPressed: () => {
-              setState(
-                () {
-                  pickCharacters.clear();
-                  var checked = checkList.where((c) => c).toList();
-                  var candidates = poemJson;
-                  if (checked.isNotEmpty) {
-                    candidates = poemJson.where((e) {
-                      if (checkList[0]) {
-                        if (e['is300'] == 1) {
-                          return true;
+          // width: 25,
+          // height: 25,
+          child: Showcase(
+              key: _seven,
+              description: PoemLocalizations.of(context).change,
+              disableDefaultTargetGestures: true,
+              // onBarrierClick: () => debugPrint('Barrier clicked'),
+              child: GestureDetector(
+                  // onTap: () => debugPrint('menu button clicked'),
+                  child: FloatingActionButton(
+                mini: true,
+                onPressed: () => {
+                  setState(
+                    () {
+                      pickCharacters.clear();
+                      var checked = checkList.where((c) => c).toList();
+                      var candidates = poemJson;
+                      if (checked.isNotEmpty) {
+                        candidates = poemJson.where((e) {
+                          if (checkList[0]) {
+                            if (e['is300'] == 1) {
+                              return true;
+                            }
+                          }
+
+                          if (checkList[e['grade']]) {
+                            return true;
+                          }
+
+                          return false;
+                        }).toList();
+                      }
+                      choosePoem =
+                          candidates[Random().nextInt(candidates.length)];
+                      var paragraphsCns = choosePoem['paragraphs_cns'];
+                      var paragraphsCnt = choosePoem['paragraphs_cnt'];
+
+                      for (int i = 0; i < paragraphsCns.length; i++) {
+                        var krctCns = paragraphsCns[i].split("");
+                        var krctCnt = paragraphsCnt[i].split("");
+                        for (int idx = 0; idx < krctCns.length; idx++) {
+                          if (!isPunctuate(krctCns[idx])) {
+                            pickCharacters.add(
+                                Character(krctCns[idx], krctCnt[idx], '', ''));
+                          }
                         }
                       }
-
-                      if (checkList[e['grade']]) {
-                        return true;
-                      }
-
-                      return false;
-                    }).toList();
-                  }
-                  choosePoem = candidates[Random().nextInt(candidates.length)];
-                  var paragraphsCns = choosePoem['paragraphs_cns'];
-                  var paragraphsCnt = choosePoem['paragraphs_cnt'];
-
-                  for (int i = 0; i < paragraphsCns.length; i++) {
-                    var krctCns = paragraphsCns[i].split("");
-                    var krctCnt = paragraphsCnt[i].split("");
-                    for (int idx = 0; idx < krctCns.length; idx++) {
-                      if (!isPunctuate(krctCns[idx])) {
-                        pickCharacters
-                            .add(Character(krctCns[idx], krctCnt[idx], '', ''));
-                      }
-                    }
-                  }
-                  pickCharacters.shuffle();
-                  rowsCharacters.clear();
-                  //初始化固定长度数组
-                  rowsCharacters = []..length = paragraphsCns.length;
+                      pickCharacters.shuffle();
+                      rowsCharacters.clear();
+                      //初始化固定长度数组
+                      rowsCharacters = []..length = paragraphsCns.length;
+                    },
+                  )
                 },
-              )
-            },
-            tooltip: PoemLocalizations.of(context).change,
-            child: const Icon(Icons.refresh),
-          ), // This trailing comma makes auto-formatting nicer for build methods.
+                tooltip: PoemLocalizations.of(context).change,
+                child: const Icon(Icons.refresh),
+              ))), // This trailing comma makes auto-formatting nicer for build methods.
         ));
   }
 }
