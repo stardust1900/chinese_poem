@@ -250,13 +250,14 @@ class _MyHomePageState extends State<MyHomePage> {
     return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
       Expanded(
           child: Column(children: [
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        FittedBox(
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Container(
-            width: 120,
+            // width: 120,
             height: 60,
             alignment: Alignment.bottomRight,
-            child: FittedBox(
-                child: Wrap(children: [
+            child: Wrap(children: [
+              SizedBox.fromSize(size: Size(24, 24)),
               Showcase(
                   key: _one,
                   description: PoemLocalizations.of(context).english,
@@ -301,16 +302,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       });
                     },
                   ))),
-            ])),
+            ]),
           ),
           ...krctList.map((c) => genCharacter(c, colorScheme)).toList(),
           Container(
-              width: 120,
+              // width: 120,
               height: 60,
               alignment: Alignment.bottomRight,
               // color: colorScheme.secondary,
-              child: FittedBox(
-                  child: Wrap(children: [
+              child: Wrap(children: [
                 Showcase(
                     key: _three,
                     description: PoemLocalizations.of(context).next,
@@ -402,8 +402,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         });
                       },
                     ))),
-              ]))),
-        ]),
+              ])),
+        ])),
         genEnRow(authorEn, colorScheme)
       ]))
     ]);
