@@ -57,7 +57,7 @@ class _PoemAppState extends State<PoemApp> {
             log('onStart: $index, $key');
           },
           onComplete: (index, key) {
-            log('onComplete: $index, $key');
+            // log('onComplete: $index, $key');
             if (index == 4) {
               SystemChrome.setSystemUIOverlayStyle(
                 SystemUiOverlayStyle.light.copyWith(
@@ -125,7 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    log("initState begin");
+    // log("initState begin");
     // int rInt;
     rootBundle.loadString('asset/datas/chinese_poems.json').then((res) => {
           poemJson = jsonDecode(res),
@@ -155,7 +155,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     _prefs.then((SharedPreferences prefs) {
       bool showcaseview = prefs.getBool('showcaseview') ?? true;
-      log("showcaseview: $showcaseview");
+      // log("showcaseview: $showcaseview");
       if (showcaseview) {
         prefs.setBool('showcaseview', !showcaseview);
         //showcaseview操作指引
@@ -646,7 +646,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: Text(
                             enTxt,
                             style: TextStyle(
-                                fontSize: 10, color: colorScheme.secondary),
+                                fontSize: 13, color: colorScheme.secondary),
                           ))))))
     ]);
   }
@@ -668,17 +668,32 @@ class _MyHomePageState extends State<MyHomePage> {
           alignment: Alignment.center,
           child: Text(c, style: const TextStyle(fontSize: 35)),
         ), // 携带的数据
-        child: Container(
-          // 正常状态下的显示
-          width: 40,
-          height: 40,
-          color: const Color.fromARGB(255, 243, 239, 239),
-          alignment: Alignment.topCenter,
-          child: Text(
-            c,
-            style: const TextStyle(fontSize: 30),
-          ),
-        ),
+        child: GestureDetector(
+            onDoubleTap: () {
+              // log("tap:$c");
+              setState(() {
+                for (int r = 0; r < rowsCharacters.length; r++) {
+                  for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
+                    final rc = rowsCharacters[r][idx];
+                    if (rc.txtCns == c || rc.txtCnt == c) {
+                      rc.visibable = true;
+                      pickCharacters.removeAt(i);
+                    }
+                  }
+                }
+              });
+            },
+            child: Container(
+              // 正常状态下的显示
+              width: 40,
+              height: 40,
+              color: const Color.fromARGB(255, 243, 239, 239),
+              alignment: Alignment.topCenter,
+              child: Text(
+                c,
+                style: const TextStyle(fontSize: 30),
+              ),
+            )),
       );
       dragList.add(drag);
     }
