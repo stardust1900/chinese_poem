@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math' hide log;
 import 'dart:ui';
 import 'dart:developer';
+import 'package:chinese_poems/draggable_floating_button.dart';
 import 'package:chinese_poems/poem_i18n.dart';
 import 'package:chinese_poems/poem_theme.dart';
 import 'package:flutter/material.dart';
@@ -102,6 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey _five = GlobalKey();
   final GlobalKey _six = GlobalKey();
   final GlobalKey _seven = GlobalKey();
+  final GlobalKey _body = GlobalKey();
 
   final changeLocale;
   bool shownEn = false;
@@ -188,8 +190,9 @@ class _MyHomePageState extends State<MyHomePage> {
     final titleEn = choosePoem['title_en'];
     var krctList = [];
     for (int i = 0; i < titleCns.length; i++) {
-      krctList
-          .add(Character(titleCns[i], titleCnt[i], titlePy1[i], titlePy2[i]));
+      final c = Character(titleCns[i], titleCnt[i], titlePy1[i], titlePy2[i]);
+      c.isPunctuate = isPunctuate(c.txtCns);
+      krctList.add(c);
     }
     return Row(children: [
       Expanded(
@@ -205,33 +208,40 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget genCharacter(c, colorScheme) {
-    return Padding(
-      padding: const EdgeInsets.all(5),
-      child: Flex(
-        direction: Axis.vertical,
-        children: [
-          Container(
-            width: 40,
-            height: 20,
-            alignment: Alignment.center,
-            child: Visibility(
-                visible: showPinyin,
-                child: Text(
-                  pinyinStyle1 ? c.pinyin1 : c.pinyin2,
-                  style: TextStyle(color: colorScheme.error),
-                )),
-          ),
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            color: colorScheme.secondary,
-            child: Text(simplifiedChinese ? c.txtCns : c.txtCnt,
-                style: const TextStyle(fontSize: 25)),
-          )
-        ],
-      ),
-    );
+    return c.isPunctuate
+        ? Container(
+            width: 20,
+            height: 60,
+            alignment: Alignment.bottomCenter,
+            // color: colorScheme.secondary,
+            child: Text(c.txtCns))
+        : Padding(
+            padding: const EdgeInsets.all(5),
+            child: Flex(
+              direction: Axis.vertical,
+              children: [
+                Container(
+                  width: 40,
+                  height: 20,
+                  alignment: Alignment.center,
+                  child: Visibility(
+                      visible: showPinyin,
+                      child: Text(
+                        pinyinStyle1 ? c.pinyin1 : c.pinyin2,
+                        style: TextStyle(color: colorScheme.error),
+                      )),
+                ),
+                Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  color: colorScheme.secondary,
+                  child: Text(simplifiedChinese ? c.txtCns : c.txtCnt,
+                      style: const TextStyle(fontSize: 25)),
+                )
+              ],
+            ),
+          );
   }
 
 // 生成作者
@@ -257,7 +267,7 @@ class _MyHomePageState extends State<MyHomePage> {
             height: 60,
             alignment: Alignment.bottomRight,
             child: Wrap(children: [
-              SizedBox.fromSize(size: Size(24, 24)),
+              SizedBox.fromSize(size: const Size(24, 24)),
               Showcase(
                   key: _one,
                   description: PoemLocalizations.of(context).english,
@@ -530,6 +540,10 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Character> krctList;
     if (rowsCharacters[rowIdx] == null) {
       krctList = [];
+      if (kractsCns.length != pinyin1.length) {
+        log("$rowCns");
+        log("$rowPy1");
+      }
       for (int i = 0; i < kractsCns.length; i++) {
         final c = Character(kractsCns[i], kractsCnt[i], pinyin1[i], pinyin2[i]);
         c.isPunctuate = isPunctuate(c.txtCns);
@@ -676,8 +690,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
                     final rc = rowsCharacters[r][idx];
                     if (rc.txtCns == c || rc.txtCnt == c) {
-                      rc.visibable = true;
-                      pickCharacters.removeAt(i);
+                      if (!rc.visibable) {
+                        rc.visibable = true;
+                        pickCharacters.removeAt(i);
+                        return;
+                      }
                     }
                   }
                 }
@@ -908,27 +925,32 @@ class _MyHomePageState extends State<MyHomePage> {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
     String titleText = PoemLocalizations.of(context).title;
     final ctrler = ScrollController(initialScrollOffset: 0);
+
+    Size screenSize = MediaQuery.of(context).size;
+    log("screenSize $screenSize");
+
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: colorScheme.inversePrimary,
-          title: Text(titleText),
-          // leading: Builder(builder: (context) {
-          //   return IconButton(
-          //     icon: const Icon(Icons.dashboard, color: Colors.white), //自定义图标
-          //     onPressed: () {
-          //       // 打开抽屉菜单
-          //       Scaffold.of(context).openDrawer();
-          //     },
-          //   );
-          // }),
-        ),
-        // drawer: PoemDrawer(changeLocale: changeLocale),
-        drawer: Drawer(
-          child: genDrawItems(colorScheme),
-        ),
-        body: Container(
-            padding: EdgeInsets.all(1),
-            child: Flex(
+      appBar: AppBar(
+        backgroundColor: colorScheme.inversePrimary,
+        title: Text(titleText),
+        // leading: Builder(builder: (context) {
+        //   return IconButton(
+        //     icon: const Icon(Icons.dashboard, color: Colors.white), //自定义图标
+        //     onPressed: () {
+        //       // 打开抽屉菜单
+        //       Scaffold.of(context).openDrawer();
+        //     },
+        //   );
+        // }),
+      ),
+      // drawer: PoemDrawer(changeLocale: changeLocale),
+      drawer: Drawer(
+        child: genDrawItems(colorScheme),
+      ),
+      body: Container(
+          padding: EdgeInsets.all(1),
+          child: Stack(key: _body, children: [
+            Flex(
               direction: Axis.vertical,
               children: [
                 Expanded(
@@ -958,20 +980,11 @@ class _MyHomePageState extends State<MyHomePage> {
                             ])))),
                 _pickArea(colorScheme),
               ],
-            )),
-        floatingActionButton: SizedBox(
-          // width: 25,
-          // height: 25,
-          child: Showcase(
-              key: _seven,
-              description: PoemLocalizations.of(context).change,
-              disableDefaultTargetGestures: true,
-              // onBarrierClick: () => debugPrint('Barrier clicked'),
-              child: GestureDetector(
-                  // onTap: () => debugPrint('menu button clicked'),
-                  child: FloatingActionButton(
-                mini: true,
-                onPressed: () => {
+            ),
+            DraggableFloatingActionButton(
+                initialOffset:
+                    Offset(screenSize.width - 40, screenSize.height - 240),
+                onPressed: () {
                   setState(
                     () {
                       pickCharacters.clear();
@@ -1012,12 +1025,93 @@ class _MyHomePageState extends State<MyHomePage> {
                       //初始化固定长度数组
                       rowsCharacters = []..length = paragraphsCns.length;
                     },
-                  )
+                  );
                 },
-                tooltip: PoemLocalizations.of(context).change,
-                child: const Icon(Icons.refresh),
-              ))), // This trailing comma makes auto-formatting nicer for build methods.
-        ));
+                parentKey: _body,
+                child: Showcase(
+                    key: _seven,
+                    description: PoemLocalizations.of(context).change,
+                    disableDefaultTargetGestures: true,
+                    // onBarrierClick: () => debugPrint('Barrier clicked'),
+                    child: GestureDetector(
+                      // onTap: () => debugPrint('menu button clicked'),
+                      child: Container(
+                          // color: colorScheme.primaryContainer,
+                          decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(5.0), // 设置左上角圆角为5
+                                topRight: Radius.circular(5.0),
+                                bottomRight: Radius.circular(5.0), // 设置右下角圆角为5
+                                bottomLeft: Radius.circular(5.0),
+                              )),
+                          child: const Icon(
+                            size: 34,
+                            Icons.refresh,
+                            // color: colorScheme.primaryContainer,
+                          )),
+                    )))
+          ])),
+      // floatingActionButton: SizedBox(
+      //   // width: 25,
+      //   // height: 25,
+      //   child: Showcase(
+      //       key: _seven,
+      //       description: PoemLocalizations.of(context).change,
+      //       disableDefaultTargetGestures: true,
+      //       // onBarrierClick: () => debugPrint('Barrier clicked'),
+      //       child: GestureDetector(
+      //           // onTap: () => debugPrint('menu button clicked'),
+      //           child: FloatingActionButton(
+      //         mini: true,
+      //         onPressed: () => {
+      //           setState(
+      //             () {
+      //               pickCharacters.clear();
+      //               var checked = checkList.where((c) => c).toList();
+      //               var candidates = poemJson;
+      //               if (checked.isNotEmpty) {
+      //                 candidates = poemJson.where((e) {
+      //                   if (checkList[0]) {
+      //                     if (e['is300'] == 1) {
+      //                       return true;
+      //                     }
+      //                   }
+
+      //                   if (checkList[e['grade']]) {
+      //                     return true;
+      //                   }
+
+      //                   return false;
+      //                 }).toList();
+      //               }
+      //               choosePoem =
+      //                   candidates[Random().nextInt(candidates.length)];
+      //               var paragraphsCns = choosePoem['paragraphs_cns'];
+      //               var paragraphsCnt = choosePoem['paragraphs_cnt'];
+
+      //               for (int i = 0; i < paragraphsCns.length; i++) {
+      //                 var krctCns = paragraphsCns[i].split("");
+      //                 var krctCnt = paragraphsCnt[i].split("");
+      //                 for (int idx = 0; idx < krctCns.length; idx++) {
+      //                   if (!isPunctuate(krctCns[idx])) {
+      //                     pickCharacters.add(
+      //                         Character(krctCns[idx], krctCnt[idx], '', ''));
+      //                   }
+      //                 }
+      //               }
+      //               pickCharacters.shuffle();
+      //               rowsCharacters.clear();
+      //               //初始化固定长度数组
+      //               rowsCharacters = []..length = paragraphsCns.length;
+      //             },
+      //           )
+      //         },
+      //         tooltip: PoemLocalizations.of(context).change,
+      //         child: const Icon(Icons.refresh),
+      //       ))), // This trailing comma makes auto-formatting nicer for build methods.
+      // )
+    );
   }
 }
 

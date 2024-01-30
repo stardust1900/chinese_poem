@@ -232,6 +232,7 @@ final ColorScheme chineseStyle14 = ColorScheme.fromSeed(
 final ColorScheme chineseStyle15 = ColorScheme.fromSeed(
   seedColor: Color(0xFFC07A6A), // 赭石
   primary: Color(0xFF9E655F),
+  primaryContainer: Color(0xFFC07A6A),
   secondary: Color(0xFFE5E5E5), // 灰白
   tertiary: Color(0xFF81B29A),
   secondaryContainer: Color(0xFFD4D4D4),
