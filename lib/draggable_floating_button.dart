@@ -35,7 +35,7 @@ class _DraggableFloatingActionButtonState
     super.initState();
     _offset = widget.initialOffset;
 
-    WidgetsBinding.instance?.addPostFrameCallback(_setBoundary);
+    WidgetsBinding.instance.addPostFrameCallback(_setBoundary);
   }
 
   void _setBoundary(_) {
