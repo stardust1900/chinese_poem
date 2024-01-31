@@ -55,7 +55,7 @@ class _PoemAppState extends State<PoemApp> {
       home: Scaffold(
         body: ShowCaseWidget(
           onStart: (index, key) {
-            log('onStart: $index, $key');
+            // log('onStart: $index, $key');
           },
           onComplete: (index, key) {
             // log('onComplete: $index, $key');
@@ -543,6 +543,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if (kractsCns.length != pinyin1.length) {
         log("$rowCns");
         log("$rowPy1");
+        changePoem();
       }
       for (int i = 0; i < kractsCns.length; i++) {
         final c = Character(kractsCns[i], kractsCnt[i], pinyin1[i], pinyin2[i]);
@@ -927,7 +928,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final ctrler = ScrollController(initialScrollOffset: 0);
 
     Size screenSize = MediaQuery.of(context).size;
-    log("screenSize $screenSize");
+    // log("screenSize $screenSize");
 
     return Scaffold(
       appBar: AppBar(
@@ -985,47 +986,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 initialOffset:
                     Offset(screenSize.width - 40, screenSize.height - 240),
                 onPressed: () {
-                  setState(
-                    () {
-                      pickCharacters.clear();
-                      var checked = checkList.where((c) => c).toList();
-                      var candidates = poemJson;
-                      if (checked.isNotEmpty) {
-                        candidates = poemJson.where((e) {
-                          if (checkList[0]) {
-                            if (e['is300'] == 1) {
-                              return true;
-                            }
-                          }
-
-                          if (checkList[e['grade']]) {
-                            return true;
-                          }
-
-                          return false;
-                        }).toList();
-                      }
-                      choosePoem =
-                          candidates[Random().nextInt(candidates.length)];
-                      var paragraphsCns = choosePoem['paragraphs_cns'];
-                      var paragraphsCnt = choosePoem['paragraphs_cnt'];
-
-                      for (int i = 0; i < paragraphsCns.length; i++) {
-                        var krctCns = paragraphsCns[i].split("");
-                        var krctCnt = paragraphsCnt[i].split("");
-                        for (int idx = 0; idx < krctCns.length; idx++) {
-                          if (!isPunctuate(krctCns[idx])) {
-                            pickCharacters.add(
-                                Character(krctCns[idx], krctCnt[idx], '', ''));
-                          }
-                        }
-                      }
-                      pickCharacters.shuffle();
-                      rowsCharacters.clear();
-                      //初始化固定长度数组
-                      rowsCharacters = []..length = paragraphsCns.length;
-                    },
-                  );
+                  changePoem();
                 },
                 parentKey: _body,
                 child: Showcase(
@@ -1034,23 +995,26 @@ class _MyHomePageState extends State<MyHomePage> {
                     disableDefaultTargetGestures: true,
                     // onBarrierClick: () => debugPrint('Barrier clicked'),
                     child: GestureDetector(
-                      // onTap: () => debugPrint('menu button clicked'),
-                      child: Container(
-                          // color: colorScheme.primaryContainer,
-                          decoration: BoxDecoration(
-                              color: colorScheme.primaryContainer,
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(5.0), // 设置左上角圆角为5
-                                topRight: Radius.circular(5.0),
-                                bottomRight: Radius.circular(5.0), // 设置右下角圆角为5
-                                bottomLeft: Radius.circular(5.0),
-                              )),
-                          child: const Icon(
-                            size: 34,
-                            Icons.refresh,
-                            // color: colorScheme.primaryContainer,
-                          )),
-                    )))
+                        // onTap: () => debugPrint('menu button clicked'),
+                        child: FloatingActionButton(
+                      mini: true,
+                      onPressed: () {},
+                      child: const Icon(Icons.refresh),
+                    )
+                        // Container(
+                        //     decoration: BoxDecoration(
+                        //         color: colorScheme.primaryContainer,
+                        //         borderRadius: const BorderRadius.only(
+                        //           topLeft: Radius.circular(5.0), // 设置左上角圆角为5
+                        //           topRight: Radius.circular(5.0),
+                        //           bottomRight: Radius.circular(5.0), // 设置右下角圆角为5
+                        //           bottomLeft: Radius.circular(5.0),
+                        //         )),
+                        //     child: const Icon(
+                        //       size: 34,
+                        //       Icons.refresh,
+                        //     )),
+                        )))
           ])),
       // floatingActionButton: SizedBox(
       //   // width: 25,
@@ -1112,6 +1076,51 @@ class _MyHomePageState extends State<MyHomePage> {
       //       ))), // This trailing comma makes auto-formatting nicer for build methods.
       // )
     );
+  }
+
+  void changePoem() {
+    setState(() {
+      pickCharacters.clear();
+      var checked = checkList.where((c) => c).toList();
+      var candidates = poemJson;
+      if (checked.isNotEmpty) {
+        candidates = poemJson.where((e) {
+          if (checkList[0]) {
+            if (e['is300'] == 1) {
+              return true;
+            }
+          }
+
+          if (checkList[e['grade']]) {
+            return true;
+          }
+
+          return false;
+        }).toList();
+      }
+      var tempPoem = candidates[Random().nextInt(candidates.length)];
+      while (tempPoem['title_cns'] == choosePoem['title_cns']) {
+        // log("${tempPoem['title_cns']},${choosePoem['title_cns']}");
+        tempPoem = candidates[Random().nextInt(candidates.length)];
+      }
+      choosePoem = tempPoem;
+      var paragraphsCns = choosePoem['paragraphs_cns'];
+      var paragraphsCnt = choosePoem['paragraphs_cnt'];
+
+      for (int i = 0; i < paragraphsCns.length; i++) {
+        var krctCns = paragraphsCns[i].split("");
+        var krctCnt = paragraphsCnt[i].split("");
+        for (int idx = 0; idx < krctCns.length; idx++) {
+          if (!isPunctuate(krctCns[idx])) {
+            pickCharacters.add(Character(krctCns[idx], krctCnt[idx], '', ''));
+          }
+        }
+      }
+      pickCharacters.shuffle();
+      rowsCharacters.clear();
+      //初始化固定长度数组
+      rowsCharacters = []..length = paragraphsCns.length;
+    });
   }
 }
 

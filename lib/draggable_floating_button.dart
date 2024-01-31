@@ -9,7 +9,8 @@ class DraggableFloatingActionButton extends StatefulWidget {
   final VoidCallback onPressed;
   final GlobalKey parentKey;
 
-  DraggableFloatingActionButton({
+  const DraggableFloatingActionButton({
+    super.key,
     required this.child,
     required this.initialOffset,
     required this.onPressed,
@@ -92,7 +93,7 @@ class _DraggableFloatingActionButtonState
           });
         },
         onPointerUp: (PointerUpEvent pointerUpEvent) {
-          print('onPointerUp');
+          // print('onPointerUp');
 
           if (_isDragging) {
             setState(() {
