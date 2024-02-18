@@ -1099,10 +1099,11 @@ class _MyHomePageState extends State<MyHomePage> {
         }).toList();
       }
       var tempPoem = candidates[Random().nextInt(candidates.length)];
-      while (tempPoem['title_cns'] == choosePoem['title_cns']) {
-        // log("${tempPoem['title_cns']},${choosePoem['title_cns']}");
-        tempPoem = candidates[Random().nextInt(candidates.length)];
-      }
+      //去掉重复判断 防止死循环
+      // while (tempPoem['title_cns'] == choosePoem['title_cns']) {
+      //   // log("${tempPoem['title_cns']},${choosePoem['title_cns']}");
+      //   tempPoem = candidates[Random().nextInt(candidates.length)];
+      // }
       choosePoem = tempPoem;
       var paragraphsCns = choosePoem['paragraphs_cns'];
       var paragraphsCnt = choosePoem['paragraphs_cnt'];
