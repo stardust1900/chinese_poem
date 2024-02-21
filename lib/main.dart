@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:math' hide log;
 import 'dart:ui';
-import 'dart:developer';
 import 'package:chinese_poems/draggable_floating_button.dart';
 import 'package:chinese_poems/poem_i18n.dart';
 import 'package:chinese_poems/poem_theme.dart';
@@ -127,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    // log("initState begin");
+    log("initState begin");
     // int rInt;
     rootBundle.loadString('asset/datas/chinese_poems.json').then((res) => {
           poemJson = jsonDecode(res),
@@ -540,10 +540,11 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Character> krctList;
     if (rowsCharacters[rowIdx] == null) {
       krctList = [];
-      if (kractsCns.length != pinyin1.length) {
+      if (kractsCns.length != pinyin1.length ||
+          kractsCns.length != kractsCnt.length ||
+          kractsCns.length != pinyin2.length) {
         log("$rowCns");
-        log("$rowPy1");
-        changePoem();
+        // changePoem();
       }
       for (int i = 0; i < kractsCns.length; i++) {
         final c = Character(kractsCns[i], kractsCnt[i], pinyin1[i], pinyin2[i]);
@@ -985,9 +986,7 @@ class _MyHomePageState extends State<MyHomePage> {
             DraggableFloatingActionButton(
                 initialOffset:
                     Offset(screenSize.width - 40, screenSize.height - 240),
-                onPressed: () {
-                  changePoem();
-                },
+                onPressed: () {},
                 parentKey: _body,
                 child: Showcase(
                     key: _seven,
@@ -998,7 +997,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         // onTap: () => debugPrint('menu button clicked'),
                         child: FloatingActionButton(
                       mini: true,
-                      onPressed: () {},
+                      onPressed: () {
+                        changePoem();
+                      },
                       child: const Icon(Icons.refresh),
                     )
                         // Container(
@@ -1079,6 +1080,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void changePoem() {
+    log("changePoem start");
     setState(() {
       pickCharacters.clear();
       var checked = checkList.where((c) => c).toList();
@@ -1121,6 +1123,7 @@ class _MyHomePageState extends State<MyHomePage> {
       rowsCharacters.clear();
       //初始化固定长度数组
       rowsCharacters = []..length = paragraphsCns.length;
+      log("changePoem end");
     });
   }
 }
