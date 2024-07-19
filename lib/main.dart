@@ -69,9 +69,8 @@ class _PoemAppState extends State<PoemApp> {
             }
           },
           blurValue: 1,
-          builder: Builder(
-              builder: (context) =>
-                  MyHomePage(changeLocale: (locale) => _changeLocale(locale))),
+          builder: (context) =>
+              MyHomePage(changeLocale: (locale) => _changeLocale(locale)),
           autoPlayDelay: const Duration(seconds: 3),
         ),
       ),
