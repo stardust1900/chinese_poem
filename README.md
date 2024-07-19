@@ -12,7 +12,6 @@
 
 - 可以随机显示一些字作为提示
 
-<img src="image_url" alt="description" width="400">
 <img src="https://github.com/stardust1900/stardust1900.github.io/blob/a7b299c551fa96eb5ed00e5e0584cdbb6a5de465/assets/images/20240719/p1.jpg" alt="description" width="400">
 <img src="https://github.com/stardust1900/stardust1900.github.io/blob/a7b299c551fa96eb5ed00e5e0584cdbb6a5de465/assets/images/20240719/p2.jpg" alt="description" width="400">
 <img src="https://github.com/stardust1900/stardust1900.github.io/blob/a7b299c551fa96eb5ed00e5e0584cdbb6a5de465/assets/images/20240719/p3.jpg" alt="description" width="400">
