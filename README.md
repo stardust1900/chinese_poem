@@ -1,16 +1,11 @@
-# chinese_poems
+# 拼拼古诗
 
-A new Flutter project.
+一个古诗评图游戏
 
-## Getting Started
+包含唐诗三百首，和小学、初中、高中课本中的古诗。
 
-This project is a starting point for a Flutter application.
+- 可以切换简体繁体。
+- 每个字可以展示两种格式汉语拼音
+- 可以展示每句古诗的英文翻译
+- 可以随机显示一些字作为提示
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
