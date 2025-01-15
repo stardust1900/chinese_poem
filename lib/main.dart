@@ -270,7 +270,7 @@ class _MyHomePageState extends State<MyHomePage> {
               Showcase(
                   key: _one,
                   description: PoemLocalizations.of(context).english,
-                  descriptionAlignment: TextAlign.center,
+                  descriptionTextAlign: TextAlign.center,
                   // tooltipPadding: EdgeInsets.all(100),
                   // onBarrierClick: () => debugPrint('Barrier clicked'),
                   child: GestureDetector(
