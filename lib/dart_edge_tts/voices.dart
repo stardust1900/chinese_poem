@@ -33,7 +33,6 @@ Future<List<Voice>?> listVoices() async {
     if (response.statusCode != 200) {
       throw Exception("Failed to fetch voices: ${response.statusCode}");
     }
-
     final data = jsonDecode(response.body) as List;
     return data.map((e) => Voice.fromMap(e)).toList();
   } finally {
@@ -85,4 +84,6 @@ class VoicesManager {
           matchesPersonalities;
     }).toList();
   }
+
+  List<Voice> get voices => _voices;
 }

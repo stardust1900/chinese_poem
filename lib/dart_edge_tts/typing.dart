@@ -6,52 +6,45 @@ import 'dart:typed_data';
 enum TTSChunkType { audio, wordBoundary }
 
 enum ContentCategory {
-  cartoon,
-  conversation,
-  copilot,
-  dialect,
-  general,
-  news,
-  novel,
-  sports,
+  Cartoon,
+  Conversation,
+  Copilot,
+  Dialect,
+  General,
+  News,
+  Novel,
+  Sports,
 }
 
 enum VoicePersonality {
-  approachable,
-  authentic,
-  authority,
-  bright,
-  caring,
-  casual,
-  cheerful,
-  clear,
-  comfort,
-  confident,
-  considerate,
-  conversational,
-  cute,
-  expressive,
-  friendly,
-  honest,
-  humorous,
-  lively,
-  passion,
-  pleasant,
-  positive,
-  professional,
-  rational,
-  reliable,
-  sincere,
-  sunshine,
-  warm,
+  Approachable,
+  Authentic,
+  Authority,
+  Bright,
+  Caring,
+  Casual,
+  Cheerful,
+  Clear,
+  Comfort,
+  Confident,
+  Considerate,
+  Conversational,
+  Cute,
+  Expressive,
+  Friendly,
+  Honest,
+  Humorous,
+  Lively,
+  Passion,
+  Pleasant,
+  Positive,
+  Professional,
+  Rational,
+  Reliable,
+  Sincere,
+  Sunshine,
+  Warm,
 }
-
-enum Gender { female, male }
-
-enum SuggestedCodec { audio24khz48kbitrateMonoMp3 }
-
-enum VoiceStatus { ga }
-
 // Define custom types using classes and enums
 
 class TTSChunk {
@@ -104,10 +97,10 @@ class VoiceTag {
   factory VoiceTag.fromMap(Map<String, dynamic> map) {
     return VoiceTag(
       contentCategories: (map['ContentCategories'] as List<dynamic>)
-          .map((e) => ContentCategory.values.byName(e))
+          .map((e) => ContentCategory.values.byName(e.trim()))
           .toList(),
       voicePersonalities: (map['VoicePersonalities'] as List<dynamic>)
-          .map((e) => VoicePersonality.values.byName(e))
+          .map((e) => VoicePersonality.values.byName(e.trim()))
           .toList(),
     );
   }
@@ -123,11 +116,11 @@ class VoiceTag {
 class Voice {
   final String name;
   final String shortName;
-  final Gender gender;
+  final String gender;
   final String locale;
-  final SuggestedCodec suggestedCodec;
+  final String suggestedCodec;
   final String friendlyName;
-  final VoiceStatus status;
+  final String status;
   final VoiceTag voiceTag;
 
   Voice({
@@ -145,11 +138,11 @@ class Voice {
     return Voice(
       name: map['Name'],
       shortName: map['ShortName'],
-      gender: Gender.values.byName(map['Gender']),
+      gender: map['Gender'],
       locale: map['Locale'],
-      suggestedCodec: SuggestedCodec.values.byName(map['SuggestedCodec']),
+      suggestedCodec: map['SuggestedCodec'],
       friendlyName: map['FriendlyName'],
-      status: VoiceStatus.values.byName(map['Status']),
+      status: map['Status'],
       voiceTag: VoiceTag.fromMap(map['VoiceTag']),
     );
   }
@@ -158,11 +151,11 @@ class Voice {
     return {
       'Name': name,
       'ShortName': shortName,
-      'Gender': gender.name,
+      'Gender': gender,
       'Locale': locale,
-      'SuggestedCodec': suggestedCodec.name,
+      'SuggestedCodec': suggestedCodec,
       'FriendlyName': friendlyName,
-      'Status': status.name,
+      'Status': status,
       'VoiceTag': voiceTag.toMap(),
     };
   }
@@ -187,11 +180,11 @@ class VoicesManagerVoice extends Voice {
     return VoicesManagerVoice(
       name: map['Name'],
       shortName: map['ShortName'],
-      gender: Gender.values.byName(map['Gender']),
+      gender: map['Gender'],
       locale: map['Locale'],
-      suggestedCodec: SuggestedCodec.values.byName(map['SuggestedCodec']),
+      suggestedCodec: map['SuggestedCodec'],
       friendlyName: map['FriendlyName'],
-      status: VoiceStatus.values.byName(map['Status']),
+      status: map['Status'],
       voiceTag: VoiceTag.fromMap(map['VoiceTag']),
       language: map['Language'],
     );
@@ -206,7 +199,7 @@ class VoicesManagerVoice extends Voice {
 }
 
 class VoicesManagerFind {
-  final Gender? gender;
+  final String? gender;
   final String? locale;
   final String? language;
 
@@ -214,7 +207,7 @@ class VoicesManagerFind {
 
   Map<String, dynamic> toMap() {
     return {
-      if (gender != null) 'Gender': gender!.name,
+      if (gender != null) 'Gender': gender,
       if (locale != null) 'Locale': locale,
       if (language != null) 'Language': language,
     };
@@ -222,8 +215,7 @@ class VoicesManagerFind {
 
   factory VoicesManagerFind.fromMap(Map<String, dynamic> map) {
     return VoicesManagerFind(
-      gender:
-          map['Gender'] != null ? Gender.values.byName(map['Gender']) : null,
+      gender: map['Gender'],
       locale: map['Locale'],
       language: map['Language'],
     );
