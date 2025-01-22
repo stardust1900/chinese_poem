@@ -47,6 +47,7 @@ dependencies:
   uuid: ^4.5.1
   web_socket_client: ^0.1.5
   web_socket_channel: ^3.0.1
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:

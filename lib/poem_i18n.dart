@@ -27,6 +27,7 @@ class PoemLocalizations {
       'grade.10': '10th Grade',
       'grade.11': '11th Grade',
       'grade.12': '12th Grade',
+      'read': 'Read',
       'change': 'Change a Poem',
       'english': 'English',
       'pinyin': 'Pinyin',
@@ -68,6 +69,7 @@ class PoemLocalizations {
       'grade.10': '高一',
       'grade.11': '高二',
       'grade.12': '高三',
+      'read': '朗读',
       'change': '换一首',
       'english': '英语',
       'pinyin': '拼音',
@@ -106,6 +108,10 @@ class PoemLocalizations {
 
   String getGrade(int num) {
     return _localizedValues[locale.languageCode]!['grade.$num']!;
+  }
+
+  String get read {
+    return _localizedValues[locale.languageCode]!['read']!;
   }
 
   String get change {

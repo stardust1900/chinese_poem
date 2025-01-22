@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:math' hide log;
+import 'dart:typed_data';
 import 'dart:ui';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:chinese_poems/dart_edge_tts/communicate.dart';
+import 'package:chinese_poems/dart_edge_tts/typing.dart';
 import 'package:chinese_poems/draggable_floating_button.dart';
 import 'package:chinese_poems/poem_i18n.dart';
 import 'package:chinese_poems/poem_theme.dart';
@@ -10,11 +14,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// import 'i18n_demo.dart';
 
 void main() {
   runApp(const PoemApp());
-  // runApp(const Demo());
 }
 
 class PoemApp extends StatefulWidget {
@@ -95,6 +97,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final GlobalKey _zero = GlobalKey();
   final GlobalKey _one = GlobalKey();
   final GlobalKey _two = GlobalKey();
   final GlobalKey _three = GlobalKey();
@@ -105,12 +108,16 @@ class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey _body = GlobalKey();
 
   final changeLocale;
+  final audioPlayer = AudioPlayer();
   bool shownEn = false;
   bool showPinyin = false;
   List<bool> checkList = List.filled(13, false);
   bool simplifiedChinese = true; //简体中文
   bool pinyinStyle1 = true; //拼音风格
   bool showAbout = false;
+  bool reading = false;
+  String voice = "zh-CN-XiaoxiaoNeural";
+  BytesSource? audioSource;
   var poemJson;
 
 // 选中的诗
@@ -127,6 +134,17 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     log("initState begin");
+    audioPlayer.onPlayerStateChanged.listen((PlayerState state) {
+      if (PlayerState.playing == state) {
+        setState(() {
+          reading = true;
+        });
+      } else {
+        setState(() {
+          reading = false;
+        });
+      }
+    });
     // int rInt;
     rootBundle.loadString('asset/datas/chinese_poems.json').then((res) => {
           poemJson = jsonDecode(res),
@@ -161,8 +179,8 @@ class _MyHomePageState extends State<MyHomePage> {
         prefs.setBool('showcaseview', !showcaseview);
         //showcaseview操作指引
         WidgetsBinding.instance.addPostFrameCallback(
-          (_) => ShowCaseWidget.of(context)
-              .startShowCase([_one, _two, _three, _four, _five, _six, _seven]),
+          (_) => ShowCaseWidget.of(context).startShowCase(
+              [_zero, _one, _two, _three, _four, _five, _six, _seven]),
         );
       }
     });
@@ -210,7 +228,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return c.isPunctuate
         ? Container(
             width: 20,
-            height: 60,
+            height: 50,
             alignment: Alignment.bottomCenter,
             // color: colorScheme.secondary,
             child: Text(c.txtCns))
@@ -266,7 +284,63 @@ class _MyHomePageState extends State<MyHomePage> {
             height: 60,
             alignment: Alignment.bottomRight,
             child: Wrap(children: [
-              SizedBox.fromSize(size: const Size(24, 24)),
+              Showcase(
+                  key: _zero,
+                  description: PoemLocalizations.of(context).read,
+                  descriptionTextAlign: TextAlign.center,
+                  // tooltipPadding: EdgeInsets.all(100),
+                  // onBarrierClick: () => debugPrint('Barrier clicked'),
+                  child: GestureDetector(
+                      // onTap: () => debugPrint('menu button clicked'),
+                      child: IconButton(
+                    tooltip: PoemLocalizations.of(context).read,
+                    // iconSize: 18,
+                    icon: reading
+                        ? Icon(Icons.record_voice_over,
+                            color: colorScheme.tertiary)
+                        : Icon(Icons.record_voice_over_outlined,
+                            color: colorScheme.tertiary),
+                    onPressed: () async {
+                      if (!reading) {
+                        if (audioSource == null) {
+                          var title = choosePoem['title_cns'];
+                          var author = choosePoem['author_cns'];
+                          var paragraphs = choosePoem['paragraphs_cns'].join();
+
+                          var txt = "$title $author $paragraphs";
+                          log(txt);
+                          var communicate =
+                              Communicate(text: txt, voice: voice);
+                          var bytesBuilder = BytesBuilder();
+                          await for (final message in communicate.stream()) {
+                            if (message.type == TTSChunkType.audio) {
+                              // 使用 null-aware operator和空列表初始化确保message.data不为null
+                              final audioData = message.data ?? Uint8List(0);
+                              if (audioData.isNotEmpty) {
+                                // print("add audioData");
+                                bytesBuilder.add(audioData);
+                              }
+                            }
+                          }
+                          audioSource = BytesSource(bytesBuilder.toBytes());
+                          log("play sound");
+                          audioPlayer.play(audioSource!);
+                        } else {
+                          if (PlayerState.paused == audioPlayer.state) {
+                            audioPlayer.resume();
+                          } else {
+                            audioPlayer.play(audioSource!);
+                          }
+                        }
+                      } else {
+                        if (PlayerState.playing == audioPlayer.state) {
+                          audioPlayer.pause();
+                        }
+                      }
+                      // audioPlayer.pause();
+                      // audioPlayer.resume();
+                    },
+                  ))),
               Showcase(
                   key: _one,
                   description: PoemLocalizations.of(context).english,
@@ -316,7 +390,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ...krctList.map((c) => genCharacter(c, colorScheme)).toList(),
           Container(
               // width: 120,
-              height: 60,
+              height: 50,
               alignment: Alignment.bottomRight,
               // color: colorScheme.secondary,
               child: Wrap(children: [
@@ -559,7 +633,7 @@ class _MyHomePageState extends State<MyHomePage> {
         .map((c) => (c.isPunctuate
             ? Container(
                 width: 20,
-                height: 60,
+                height: 50,
                 alignment: Alignment.bottomCenter,
                 // color: colorScheme.secondary,
                 child: Text(c.txtCns))
@@ -749,17 +823,13 @@ class _MyHomePageState extends State<MyHomePage> {
                         padding: const EdgeInsets.all(1.0),
                         child: Wrap(
                           spacing: 5,
-                          // runSpacing: 10,
-                          //动态创建一个List<Widget>
                           children: wrap1children,
                         ),
                       ),
                       Padding(
-                          padding: const EdgeInsets.all(15.0),
+                          padding: const EdgeInsets.all(10.0),
                           child: Wrap(
                             spacing: 5,
-                            // runSpacing: 10,
-                            //动态创建一个List<Widget>
                             children: wrap2children,
                           ))
                     ],
@@ -864,7 +934,65 @@ class _MyHomePageState extends State<MyHomePage> {
         )
       ],
     ));
-
+    var voiceDropdown = Row(children: [
+      Expanded(
+        child: DropdownButton(
+            isExpanded: true,
+            value: voice,
+            items: [
+              DropdownMenuItem<String>(
+                  value: "zh-CN-XiaoxiaoNeural",
+                  child: Text("Xiaoxiao - Chinese (Mainland)", softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-CN-XiaoyiNeural",
+                  child: Text("Xiaoyi - Chinese (Mainland)", softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-CN-YunjianNeural",
+                  child: Text("Yunjian - Chinese (Mainland)", softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-CN-YunxiNeural",
+                  child: Text("Yunxi - Chinese (Mainland)", softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-CN-YunxiaNeural",
+                  child: Text("Yunxia - Chinese (Mainland)", softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-CN-YunyangNeural",
+                  child: Text("Yunyang - Chinese (Mainland)", softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-CN-liaoning-XiaobeiNeural",
+                  child: Text("Xiaobei - Chinese (Northeastern Mandarin)",
+                      softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-CN-shaanxi-XiaoniNeural",
+                  child: Text("Xiaoni - Chinese (Mandarin Shaanxi)",
+                      softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-HK-HiuGaaiNeural",
+                  child: Text("HiuGaai - Chinese (Cantonese)", softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-HK-HiuMaanNeural",
+                  child: Text("HiuMaan - Chinese (Hong Kong)", softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-HK-WanLungNeural",
+                  child: Text("WanLung - Chinese (Hong Kong)", softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-TW-HsiaoChenNeural",
+                  child: Text("HsiaoChen - Chinese (Taiwan)", softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-TW-YunJheNeural",
+                  child: Text("YunJhe - Chinese (Taiwan)", softWrap: true)),
+              DropdownMenuItem<String>(
+                  value: "zh-TW-HsiaoYuNeural",
+                  child: Text("HsiaoYu - Chinese (Taiwan Mandarin)",
+                      softWrap: true)),
+            ],
+            onChanged: (value) {
+              setState(() {
+                voice = value as String;
+              });
+            }),
+      )
+    ]);
     List<Widget> tileList = [];
     for (int i = 0; i < 13; i++) {
       final tile = ListTile(
@@ -890,6 +1018,7 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               drawerHeader,
               buttonRow,
+              voiceDropdown,
               ...tileList,
             ],
           );
@@ -934,17 +1063,7 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         backgroundColor: colorScheme.inversePrimary,
         title: Text(titleText),
-        // leading: Builder(builder: (context) {
-        //   return IconButton(
-        //     icon: const Icon(Icons.dashboard, color: Colors.white), //自定义图标
-        //     onPressed: () {
-        //       // 打开抽屉菜单
-        //       Scaffold.of(context).openDrawer();
-        //     },
-        //   );
-        // }),
       ),
-      // drawer: PoemDrawer(changeLocale: changeLocale),
       drawer: Drawer(
         child: genDrawItems(colorScheme),
       ),
@@ -1000,87 +1119,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         changePoem();
                       },
                       child: const Icon(Icons.refresh),
-                    )
-                        // Container(
-                        //     decoration: BoxDecoration(
-                        //         color: colorScheme.primaryContainer,
-                        //         borderRadius: const BorderRadius.only(
-                        //           topLeft: Radius.circular(5.0), // 设置左上角圆角为5
-                        //           topRight: Radius.circular(5.0),
-                        //           bottomRight: Radius.circular(5.0), // 设置右下角圆角为5
-                        //           bottomLeft: Radius.circular(5.0),
-                        //         )),
-                        //     child: const Icon(
-                        //       size: 34,
-                        //       Icons.refresh,
-                        //     )),
-                        )))
+                    ))))
           ])),
-      // floatingActionButton: SizedBox(
-      //   // width: 25,
-      //   // height: 25,
-      //   child: Showcase(
-      //       key: _seven,
-      //       description: PoemLocalizations.of(context).change,
-      //       disableDefaultTargetGestures: true,
-      //       // onBarrierClick: () => debugPrint('Barrier clicked'),
-      //       child: GestureDetector(
-      //           // onTap: () => debugPrint('menu button clicked'),
-      //           child: FloatingActionButton(
-      //         mini: true,
-      //         onPressed: () => {
-      //           setState(
-      //             () {
-      //               pickCharacters.clear();
-      //               var checked = checkList.where((c) => c).toList();
-      //               var candidates = poemJson;
-      //               if (checked.isNotEmpty) {
-      //                 candidates = poemJson.where((e) {
-      //                   if (checkList[0]) {
-      //                     if (e['is300'] == 1) {
-      //                       return true;
-      //                     }
-      //                   }
-
-      //                   if (checkList[e['grade']]) {
-      //                     return true;
-      //                   }
-
-      //                   return false;
-      //                 }).toList();
-      //               }
-      //               choosePoem =
-      //                   candidates[Random().nextInt(candidates.length)];
-      //               var paragraphsCns = choosePoem['paragraphs_cns'];
-      //               var paragraphsCnt = choosePoem['paragraphs_cnt'];
-
-      //               for (int i = 0; i < paragraphsCns.length; i++) {
-      //                 var krctCns = paragraphsCns[i].split("");
-      //                 var krctCnt = paragraphsCnt[i].split("");
-      //                 for (int idx = 0; idx < krctCns.length; idx++) {
-      //                   if (!isPunctuate(krctCns[idx])) {
-      //                     pickCharacters.add(
-      //                         Character(krctCns[idx], krctCnt[idx], '', ''));
-      //                   }
-      //                 }
-      //               }
-      //               pickCharacters.shuffle();
-      //               rowsCharacters.clear();
-      //               //初始化固定长度数组
-      //               rowsCharacters = []..length = paragraphsCns.length;
-      //             },
-      //           )
-      //         },
-      //         tooltip: PoemLocalizations.of(context).change,
-      //         child: const Icon(Icons.refresh),
-      //       ))), // This trailing comma makes auto-formatting nicer for build methods.
-      // )
     );
   }
 
   void changePoem() {
     log("changePoem start");
     setState(() {
+      audioSource = null;
+      reading = false;
       pickCharacters.clear();
       var checked = checkList.where((c) => c).toList();
       var candidates = poemJson;
