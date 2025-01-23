@@ -106,7 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey _six = GlobalKey();
   final GlobalKey _seven = GlobalKey();
   final GlobalKey _body = GlobalKey();
-
+  bool gameMode = true;
   final changeLocale;
   final audioPlayer = AudioPlayer();
   bool shownEn = false;
@@ -117,6 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool showAbout = false;
   bool reading = false;
   String voice = "zh-CN-XiaoxiaoNeural";
+  String lastVoice = "";
   BytesSource? audioSource;
   var poemJson;
 
@@ -167,7 +168,16 @@ class _MyHomePageState extends State<MyHomePage> {
             //初始化固定长度数组
             rowsCharacters = []..length = paragraphsCns.length;
             pickCharacters.shuffle();
-          })
+
+            if (!gameMode) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                // 这里的代码将在状态更新且UI重新绘制后执行
+                setState(() {
+                  showAnswer();
+                });
+              });
+            }
+          }),
         });
 
     super.initState();
@@ -302,7 +312,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             color: colorScheme.tertiary),
                     onPressed: () async {
                       if (!reading) {
-                        if (audioSource == null) {
+                        if (audioSource == null || lastVoice != voice) {
                           var title = choosePoem['title_cns'];
                           var author = choosePoem['author_cns'];
                           var paragraphs = choosePoem['paragraphs_cns'].join();
@@ -311,6 +321,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           log(txt);
                           var communicate =
                               Communicate(text: txt, voice: voice);
+                          lastVoice = voice;
                           var bytesBuilder = BytesBuilder();
                           await for (final message in communicate.stream()) {
                             if (message.type == TTSChunkType.audio) {
@@ -470,19 +481,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       // iconSize: 16,
                       icon: Icon(Icons.lightbulb_circle,
                           color: colorScheme.outline),
-                      onPressed: () {
+                      onPressed: () => {
                         setState(() {
-                          for (int r = 0; r < rowsCharacters.length; r++) {
-                            for (int idx = 0;
-                                idx < rowsCharacters[r].length;
-                                idx++) {
-                              if (!rowsCharacters[r][idx].visibable) {
-                                rowsCharacters[r][idx].visibable = true;
-                              }
-                            }
-                          }
-                          pickCharacters.clear();
-                        });
+                          showAnswer();
+                        })
                       },
                     ))),
               ])),
@@ -931,6 +933,13 @@ class _MyHomePageState extends State<MyHomePage> {
               ? const Icon(Icons.looks_one)
               : const Icon(Icons.looks_two),
           label: Text(PoemLocalizations.of(context).pinyinStyle),
+        ),
+        TextButton.icon(
+          onPressed: () => press(3, context),
+          icon: gameMode
+              ? const Icon(Icons.videogame_asset_outlined)
+              : const Icon(Icons.videogame_asset_off_outlined),
+          label: Text(PoemLocalizations.of(context).gameMode),
         )
       ],
     ));
@@ -1042,6 +1051,10 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         pinyinStyle1 = !pinyinStyle1;
       });
+    } else if (3 == type) {
+      setState(() {
+        gameMode = !gameMode;
+      });
     }
   }
 
@@ -1124,8 +1137,25 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  void showAnswer() {
+    for (int r = 0; r < rowsCharacters.length; r++) {
+      log("${rowsCharacters[r]}");
+      if (rowsCharacters[r] != null) {
+        for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
+          if (!rowsCharacters[r][idx].visibable) {
+            rowsCharacters[r][idx].visibable = true;
+          }
+        }
+      }
+    }
+    pickCharacters.clear();
+  }
+
   void changePoem() {
     log("changePoem start");
+    if (PlayerState.playing == audioPlayer.state) {
+      audioPlayer.stop();
+    }
     setState(() {
       audioSource = null;
       reading = false;
@@ -1172,6 +1202,14 @@ class _MyHomePageState extends State<MyHomePage> {
       rowsCharacters = []..length = paragraphsCns.length;
       log("changePoem end");
     });
+    if (!gameMode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // 这里的代码将在状态更新且UI重新绘制后执行
+        setState(() {
+          showAnswer();
+        });
+      });
+    }
   }
 }
 

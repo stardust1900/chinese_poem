@@ -36,6 +36,7 @@ class PoemLocalizations {
       'simplified': 'Simplified',
       'traditional': 'Traditional',
       'pinyin_style': 'Pinyin Style',
+      'game_mode': 'Game Mode',
       'congratulations': 'Congratulations',
       'succeed': 'You made it!',
       'next': 'Next Charactor',
@@ -78,6 +79,7 @@ class PoemLocalizations {
       'simplified': '简体',
       'traditional': '繁体',
       'pinyin_style': '拼音风格',
+      'game_mode': '游戏模式',
       'congratulations': '恭喜你',
       'succeed': '拼接古诗成功！',
       'next': '下一个字',
@@ -144,6 +146,10 @@ class PoemLocalizations {
 
   String get pinyinStyle {
     return _localizedValues[locale.languageCode]!['pinyin_style']!;
+  }
+
+  String get gameMode {
+    return _localizedValues[locale.languageCode]!['game_mode']!;
   }
 
   String get congratulations {
