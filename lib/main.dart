@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:chinese_poems/dart_edge_tts/communicate.dart';
+import 'package:chinese_poems/dart_edge_tts/submaker.dart';
 import 'package:chinese_poems/dart_edge_tts/typing.dart';
 import 'package:chinese_poems/draggable_floating_button.dart';
 import 'package:chinese_poems/poem_i18n.dart';
@@ -119,14 +120,21 @@ class _MyHomePageState extends State<MyHomePage> {
   String voice = "zh-CN-XiaoxiaoNeural";
   String lastVoice = "";
   BytesSource? audioSource;
+  List<Subtitle>? subtitles;
+  int lastSubIdx = 0;
+  int cursorIdx = 0;
   var poemJson;
 
 // 选中的诗
   var choosePoem;
 
   var pickCharacters = [];
-
+  var titleCharacters = [];
+  var authorCharacters = [];
   var rowsCharacters = [];
+  //高亮的汉字
+  var highLightCharacters = [];
+  var allCharacters = [];
 
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
@@ -141,9 +149,49 @@ class _MyHomePageState extends State<MyHomePage> {
           reading = true;
         });
       } else {
+        if (PlayerState.completed == state || PlayerState.stopped == state) {
+          //播放完成或播放停止
+          setState(() {
+            lastSubIdx = 0;
+            cursorIdx = 0;
+            //旧字幕取消高亮
+            for (Character c in highLightCharacters) {
+              c.highLight = false;
+            }
+            highLightCharacters = [];
+          });
+        }
         setState(() {
           reading = false;
         });
+      }
+    });
+    audioPlayer.onPositionChanged.listen((Duration position) {
+      // log("position:$position");
+      //TODO 可优化： 根据上次位置循环字幕不需从头循环
+      for (Subtitle st in subtitles!) {
+        if (st.start.compareTo(position) <= 0 &&
+            st.end.compareTo(position) >= 0) {
+          if (lastSubIdx != st.index) {
+            setState(() {
+              log("${st.index} ${st.content} ${st.length}");
+              //旧字幕取消高亮
+              for (Character c in highLightCharacters) {
+                c.highLight = false;
+              }
+              highLightCharacters =
+                  allCharacters.sublist(cursorIdx, cursorIdx + st.length);
+              for (Character c in highLightCharacters) {
+                c.highLight = true;
+              }
+              //索引变更，更改字幕
+              log("cursorIdx:$cursorIdx -> ${cursorIdx + st.length} lastSubIdx:$lastSubIdx -> ${st.index}");
+              lastSubIdx = st.index;
+              cursorIdx = cursorIdx + st.length;
+            });
+          }
+          break;
+        }
       }
     });
     // int rInt;
@@ -208,6 +256,13 @@ class _MyHomePageState extends State<MyHomePage> {
         s == "·";
   }
 
+  List<Widget> genTitleAndAuthor(context, colorScheme) {
+    List<Widget> rows = [];
+    rows.add(genTitle(colorScheme));
+    rows.add(genAuthor(context, colorScheme));
+    return rows;
+  }
+
 // 生成标题
   Widget genTitle(colorScheme) {
     final titleCns = choosePoem['title_cns'].split("");
@@ -215,11 +270,15 @@ class _MyHomePageState extends State<MyHomePage> {
     final titlePy1 = choosePoem['title_py1'].split(" ");
     final titlePy2 = choosePoem['title_py2'].split(" ");
     final titleEn = choosePoem['title_en'];
-    var krctList = [];
-    for (int i = 0; i < titleCns.length; i++) {
-      final c = Character(titleCns[i], titleCnt[i], titlePy1[i], titlePy2[i]);
-      c.isPunctuate = isPunctuate(c.txtCns);
-      krctList.add(c);
+    if (titleCharacters.isEmpty) {
+      for (int i = 0; i < titleCns.length; i++) {
+        final c = Character(titleCns[i], titleCnt[i], titlePy1[i], titlePy2[i]);
+        c.isPunctuate = isPunctuate(c.txtCns);
+        titleCharacters.add(c);
+        if (!c.isPunctuate) {
+          allCharacters.add(c);
+        }
+      }
     }
     return Row(children: [
       Expanded(
@@ -227,11 +286,19 @@ class _MyHomePageState extends State<MyHomePage> {
         FittedBox(
             child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: krctList.map((c) => genCharacter(c, colorScheme)).toList(),
+          children: genCharacters(titleCharacters, colorScheme),
         )),
         genEnRow(titleEn, colorScheme)
       ]))
     ]);
+  }
+
+  List<Widget> genCharacters(characters, colorScheme) {
+    List<Widget> list = [];
+    for (Character c in characters) {
+      list.add(genCharacter(c, colorScheme));
+    }
+    return list;
   }
 
   Widget genCharacter(c, colorScheme) {
@@ -264,7 +331,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   alignment: Alignment.center,
                   color: colorScheme.secondary,
                   child: Text(simplifiedChinese ? c.txtCns : c.txtCnt,
-                      style: const TextStyle(fontSize: 25)),
+                      style: TextStyle(
+                          fontSize: 25,
+                          backgroundColor: c.highLight ? Colors.amber : null)),
                 )
               ],
             ),
@@ -278,10 +347,17 @@ class _MyHomePageState extends State<MyHomePage> {
     final authorPy1 = choosePoem['author_py1'].split(" ");
     final authorPy2 = choosePoem['author_py2'].split(" ");
     final authorEn = choosePoem['author_en'];
-    var krctList = [];
-    for (int i = 0; i < authorCns.length; i++) {
-      krctList.add(
-          Character(authorCns[i], authorCnt[i], authorPy1[i], authorPy2[i]));
+    if (authorCharacters.isEmpty) {
+      for (int i = 0; i < authorCns.length; i++) {
+        final c =
+            Character(authorCns[i], authorCnt[i], authorPy1[i], authorPy2[i]);
+        c.isPunctuate = isPunctuate(c.txtCns);
+        authorCharacters.add(c);
+
+        if (!c.isPunctuate) {
+          allCharacters.add(c);
+        }
+      }
     }
 
     return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
@@ -317,18 +393,25 @@ class _MyHomePageState extends State<MyHomePage> {
                         log(txt);
                         var communicate = Communicate(text: txt, voice: voice);
                         lastVoice = voice;
+                        var submaker = SubMaker();
                         var bytesBuilder = BytesBuilder();
                         await for (final message in communicate.stream()) {
                           if (message.type == TTSChunkType.audio) {
+                            //处理声音
                             // 使用 null-aware operator和空列表初始化确保message.data不为null
                             final audioData = message.data ?? Uint8List(0);
                             if (audioData.isNotEmpty) {
                               // print("add audioData");
                               bytesBuilder.add(audioData);
                             }
+                          } else if (message.type ==
+                              TTSChunkType.wordBoundary) {
+                            //处理字幕
+                            submaker.feed(message);
                           }
                         }
                         audioSource = BytesSource(bytesBuilder.toBytes());
+                        subtitles = submaker.cues;
                         log("play sound");
                         audioPlayer.play(audioSource!);
                       } else {
@@ -390,7 +473,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                 ))),
           ]),
-          ...krctList.map((c) => genCharacter(c, colorScheme)).toList(),
+          ...authorCharacters.map((c) => genCharacter(c, colorScheme)),
           Wrap(children: [
             Showcase(
                 key: _three,
@@ -610,6 +693,9 @@ class _MyHomePageState extends State<MyHomePage> {
         final c = Character(kractsCns[i], kractsCnt[i], pinyin1[i], pinyin2[i]);
         c.isPunctuate = isPunctuate(c.txtCns);
         krctList.add(c);
+        if (!c.isPunctuate) {
+          allCharacters.add(c);
+        }
       }
       rowsCharacters[rowIdx] = krctList;
     } else {
@@ -651,7 +737,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: Visibility(
                             visible: c.visibable,
                             child: Text(simplifiedChinese ? c.txtCns : c.txtCnt,
-                                style: const TextStyle(fontSize: 25))),
+                                style: TextStyle(
+                                    fontSize: 25,
+                                    backgroundColor:
+                                        c.highLight ? Colors.amber : null))),
                       );
                     },
                         // 当拖拽进入时，判断是否接受
@@ -1089,8 +1178,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          genTitle(colorScheme),
-                          genAuthor(context, colorScheme),
+                          ...genTitleAndAuthor(context, colorScheme)
                         ])),
                 Expanded(
                     flex: 7,
@@ -1195,6 +1283,9 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       pickCharacters.shuffle();
       rowsCharacters.clear();
+      titleCharacters.clear();
+      authorCharacters.clear();
+      allCharacters.clear();
       //初始化固定长度数组
       rowsCharacters = []..length = paragraphsCns.length;
       log("changePoem end");
@@ -1248,5 +1339,6 @@ class Character {
   String pinyin2;
   bool visibable = false;
   bool isPunctuate = false;
+  bool highLight = false;
   Character(this.txtCns, this.txtCnt, this.pinyin1, this.pinyin2);
 }

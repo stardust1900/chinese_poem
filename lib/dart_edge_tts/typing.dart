@@ -53,25 +53,26 @@ class TTSChunk {
   final int duration; // only for WordBoundary
   final int offset; // only for WordBoundary
   final String text; // only for WordBoundary
+  final int length;
 
-  TTSChunk({
-    required this.type,
-    this.data,
-    required this.duration,
-    required this.offset,
-    required this.text,
-  });
+  TTSChunk(
+      {required this.type,
+      this.data,
+      required this.duration,
+      required this.offset,
+      required this.text,
+      required this.length});
 
   factory TTSChunk.fromMap(Map<String, dynamic> map) {
     return TTSChunk(
-      type: map['type'] == 'audio'
-          ? TTSChunkType.audio
-          : TTSChunkType.wordBoundary,
-      data: map['data'] != null ? Uint8List.fromList(map['data']) : null,
-      duration: map['duration'],
-      offset: map['offset'],
-      text: map['text'],
-    );
+        type: map['type'] == 'audio'
+            ? TTSChunkType.audio
+            : TTSChunkType.wordBoundary,
+        data: map['data'] != null ? Uint8List.fromList(map['data']) : null,
+        duration: map['duration'],
+        offset: map['offset'],
+        text: map['text'],
+        length: map['length']);
   }
 
   Map<String, dynamic> toMap() {

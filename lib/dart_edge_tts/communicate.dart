@@ -304,16 +304,17 @@ class Communicate {
               (data['Offset'] as int?)?.toInt() ?? 0 + state.offsetCompensation;
           final currentDuration = data['Duration'] as int? ?? 0;
           final text = data['text']['Text'] as String?;
+          final length = data['text']['Length'];
 
           if (text == null) {
             throw Exception("Invalid metadata format: Text is missing");
           }
           return TTSChunk(
-            type: metaType,
-            offset: currentOffset,
-            duration: currentDuration,
-            text: text,
-          );
+              type: metaType,
+              offset: currentOffset,
+              duration: currentDuration,
+              text: text,
+              length: length);
         }
         throw Exception("Unknown metadata type: $metaType");
       }
@@ -436,7 +437,8 @@ class Communicate {
               data: data as Uint8List,
               duration: 0,
               offset: 0,
-              text: '');
+              text: '',
+              length: 0);
         } else {
           throw Exception(message.error.toString());
         }

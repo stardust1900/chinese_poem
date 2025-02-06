@@ -32,12 +32,14 @@ class Subtitle {
   final Duration start;
   final Duration end;
   final String content;
+  final int length;
 
   Subtitle({
     required this.index,
     required this.start,
     required this.end,
     required this.content,
+    required this.length,
   });
 
   @override
@@ -60,7 +62,7 @@ class SubMaker {
   List<Subtitle> cues = [];
 
   void feed(TTSChunk msg) {
-    if (msg.type != "WordBoundary") {
+    if (msg.type != TTSChunkType.wordBoundary) {
       throw ArgumentError("Invalid message type, expected 'WordBoundary'");
     }
 
@@ -70,6 +72,7 @@ class SubMaker {
         start: Duration(microseconds: msg.offset ~/ 10),
         end: Duration(microseconds: (msg.offset + msg.duration) ~/ 10),
         content: msg.text,
+        length: msg.length,
       ),
     );
   }
@@ -89,11 +92,11 @@ class SubMaker {
     for (var cue in cues.skip(1)) {
       if (currentCue.content.split(' ').length < words) {
         currentCue = Subtitle(
-          index: currentCue.index,
-          start: currentCue.start,
-          end: cue.end,
-          content: '${currentCue.content} ${cue.content}',
-        );
+            index: currentCue.index,
+            start: currentCue.start,
+            end: cue.end,
+            content: '${currentCue.content} ${cue.content}',
+            length: currentCue.length + cue.length);
       } else {
         newCues.add(currentCue);
         currentCue = cue;
@@ -107,7 +110,7 @@ class SubMaker {
   String get srt {
     final buffer = StringBuffer();
     for (var cue in cues) {
-      buffer.write('${cue.index}\n${cue}\n\n');
+      buffer.write('${cue.index}\n$cue\n\n');
     }
     return buffer.toString().trim();
   }
