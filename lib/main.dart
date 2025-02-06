@@ -744,35 +744,38 @@ class _MyHomePageState extends State<MyHomePage> {
                       );
                     },
                         // 当拖拽进入时，判断是否接受
-                        onWillAccept: (s) {
-                      return s == c.txtCns || s == c.txtCnt;
-                    }, onAccept: (s) {
+                        onWillAcceptWithDetails: (s) {
+                      return s.data == c.txtCns || s.data == c.txtCnt;
+                    }, onAcceptWithDetails: (s) {
                       setState(() {
                         rowsCharacters = rowsCharacters;
                         c.visibable = true;
                         pickCharacters.remove(pickCharacters.firstWhere(
                             (element) =>
-                                element.txtCns == s || element.txtCnt == s));
-                        for (int r = 0; r < rowsCharacters.length; r++) {
-                          for (int idx = 0;
-                              idx < rowsCharacters[r].length;
-                              idx++) {
-                            if (!rowsCharacters[r][idx].isPunctuate &&
-                                !rowsCharacters[r][idx].visibable) {
-                              return;
-                            }
-                          }
+                                element.txtCns == s.data ||
+                                element.txtCnt == s.data));
+                        // for (int r = 0; r < rowsCharacters.length; r++) {
+                        //   for (int idx = 0;
+                        //       idx < rowsCharacters[r].length;
+                        //       idx++) {
+                        //     if (!rowsCharacters[r][idx].isPunctuate &&
+                        //         !rowsCharacters[r][idx].visibable) {
+                        //       return;
+                        //     }
+                        //   }
+                        // }
+                        if (pickCharacters.isEmpty) {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text(PoemLocalizations.of(context)
+                                      .congratulations),
+                                  content: Text(
+                                      PoemLocalizations.of(context).succeed),
+                                );
+                              });
                         }
-                        showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: Text(PoemLocalizations.of(context)
-                                    .congratulations),
-                                content:
-                                    Text(PoemLocalizations.of(context).succeed),
-                              );
-                            });
                       });
                     })
                   ],
@@ -829,20 +832,48 @@ class _MyHomePageState extends State<MyHomePage> {
           // 拖拽时的显示
           width: 45,
           height: 45,
-          color: const Color.fromARGB(255, 243, 239, 239).withOpacity(0.5),
+          color: const Color.fromARGB(255, 243, 239, 239),
           alignment: Alignment.center,
           child: Text(c, style: const TextStyle(fontSize: 35)),
         ), // 携带的数据
         child: GestureDetector(
             onDoubleTap: () {
               setState(() {
+                // for (int r = 0; r < rowsCharacters.length; r++) {
+                //   for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
+                //     final rc = rowsCharacters[r][idx];
+                //     if (rc.txtCns == c || rc.txtCnt == c) {
+                //       if (!rc.visibable) {
+                //         rc.visibable = true;
+                //         pickCharacters.removeAt(i);
+                //         return;
+                //       }
+                //     }
+                //   }
+                // }
                 for (int r = 0; r < rowsCharacters.length; r++) {
                   for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
                     final rc = rowsCharacters[r][idx];
-                    if (rc.txtCns == c || rc.txtCnt == c) {
-                      if (!rc.visibable) {
+                    if (!rc.visibable && !isPunctuate(rc.txtCns)) {
+                      if (rc.txtCns == c || rc.txtCnt == c) {
                         rc.visibable = true;
-                        pickCharacters.removeAt(i);
+                        pickCharacters.remove(pickCharacters.firstWhere(
+                            (element) => element.txtCns == rc.txtCns));
+
+                        if (pickCharacters.isEmpty) {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text(PoemLocalizations.of(context)
+                                      .congratulations),
+                                  content: Text(
+                                      PoemLocalizations.of(context).succeed),
+                                );
+                              });
+                        }
+                        return;
+                      } else {
                         return;
                       }
                     }
