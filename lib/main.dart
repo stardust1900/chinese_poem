@@ -116,7 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool simplifiedChinese = true; //简体中文
   bool pinyinStyle1 = true; //拼音风格
   bool showAbout = false;
-  bool reading = false;
+  int reading = 0;
   String voice = "zh-CN-XiaoxiaoNeural";
   String lastVoice = "";
   BytesSource? audioSource;
@@ -146,7 +146,7 @@ class _MyHomePageState extends State<MyHomePage> {
     audioPlayer.onPlayerStateChanged.listen((PlayerState state) {
       if (PlayerState.playing == state) {
         setState(() {
-          reading = true;
+          reading = 1;
         });
       } else {
         if (PlayerState.completed == state || PlayerState.stopped == state) {
@@ -162,7 +162,7 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         }
         setState(() {
-          reading = false;
+          reading = 0;
         });
       }
     });
@@ -377,13 +377,20 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: IconButton(
                   tooltip: PoemLocalizations.of(context).read,
                   // iconSize: 18,
-                  icon: reading
-                      ? Icon(Icons.record_voice_over,
-                          color: colorScheme.tertiary)
-                      : Icon(Icons.record_voice_over_outlined,
-                          color: colorScheme.tertiary),
+                  icon: () {
+                    if (reading == 1) {
+                      return Icon(Icons.record_voice_over,
+                          color: colorScheme.tertiary);
+                    } else if (reading == 2) {
+                      return Icon(Icons.multitrack_audio,
+                          color: colorScheme.tertiary);
+                    } else {
+                      return Icon(Icons.record_voice_over_outlined,
+                          color: colorScheme.tertiary);
+                    }
+                  }(),
                   onPressed: () async {
-                    if (!reading) {
+                    if (reading == 0) {
                       if (audioSource == null || lastVoice != voice) {
                         var title = choosePoem['title_cns'];
                         var author = choosePoem['author_cns'];
@@ -395,6 +402,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         lastVoice = voice;
                         var submaker = SubMaker();
                         var bytesBuilder = BytesBuilder();
+                        setState(() {
+                          reading = 2;
+                        });
                         await for (final message in communicate.stream()) {
                           if (message.type == TTSChunkType.audio) {
                             //处理声音
@@ -421,10 +431,12 @@ class _MyHomePageState extends State<MyHomePage> {
                           audioPlayer.play(audioSource!);
                         }
                       }
-                    } else {
+                    } else if (reading == 1) {
                       if (PlayerState.playing == audioPlayer.state) {
                         audioPlayer.pause();
                       }
+                    } else {
+                      log("$reading");
                     }
                   },
                 ))),
@@ -1274,7 +1286,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     setState(() {
       audioSource = null;
-      reading = false;
+      reading = 0;
       pickCharacters.clear();
       var checked = checkList.where((c) => c).toList();
       var candidates = poemJson;
