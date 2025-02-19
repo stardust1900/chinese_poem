@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:math' hide log;
 import 'dart:typed_data';
 import 'dart:ui';
@@ -15,6 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() {
   runApp(const PoemApp());
@@ -119,7 +121,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int reading = 0;
   String voice = "zh-CN-XiaoxiaoNeural";
   String lastVoice = "";
-  BytesSource? audioSource;
+  DeviceFileSource? audioSource;
   List<Subtitle>? subtitles;
   int lastSubIdx = 0;
   int cursorIdx = 0;
@@ -405,25 +407,46 @@ class _MyHomePageState extends State<MyHomePage> {
                         setState(() {
                           reading = 2;
                         });
-                        await for (final message in communicate.stream()) {
-                          if (message.type == TTSChunkType.audio) {
-                            //处理声音
-                            // 使用 null-aware operator和空列表初始化确保message.data不为null
-                            final audioData = message.data ?? Uint8List(0);
-                            if (audioData.isNotEmpty) {
-                              // print("add audioData");
-                              bytesBuilder.add(audioData);
+                        try {
+                          await for (final message in communicate.stream()) {
+                            if (message.type == TTSChunkType.audio) {
+                              //处理声音
+                              // 使用 null-aware operator和空列表初始化确保message.data不为null
+                              final audioData = message.data ?? Uint8List(0);
+                              if (audioData.isNotEmpty) {
+                                log("add audioData");
+                                bytesBuilder.add(audioData);
+                              }
+                            } else if (message.type ==
+                                TTSChunkType.wordBoundary) {
+                              //处理字幕
+                              submaker.feed(message);
                             }
-                          } else if (message.type ==
-                              TTSChunkType.wordBoundary) {
-                            //处理字幕
-                            submaker.feed(message);
                           }
+                          log("bytesBuilder");
+
+                          subtitles = submaker.cues;
+                          log("play sound");
+                          final tempDir = await getTemporaryDirectory();
+
+                          final filePath = "${tempDir.path}/$title.mp3";
+                          log("filePath:$filePath");
+                          // 将字节数组写入文件
+                          try {
+                            File file = File(filePath);
+                            await file.writeAsBytes(
+                                bytesBuilder.toBytes()); // 异步写入字节数据
+                            log('数据已成功写入文件: $filePath');
+                          } catch (e) {
+                            log('写入文件时发生错误: $e');
+                          }
+                          audioSource = DeviceFileSource(filePath);
+                          // final file = File('/Users/shawn/Library/Containers/com.example.chinesePoems/Data/Library/Caches/d305a');
+                          audioPlayer.play(audioSource!);
+                          // audioPlayer.play(UrlSource(file.path));
+                        } catch (e) {
+                          log('Error playing audio: $e');
                         }
-                        audioSource = BytesSource(bytesBuilder.toBytes());
-                        subtitles = submaker.cues;
-                        log("play sound");
-                        audioPlayer.play(audioSource!);
                       } else {
                         if (PlayerState.paused == audioPlayer.state) {
                           audioPlayer.resume();
