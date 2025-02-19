@@ -1,4 +1,4 @@
-package com.example.chinese_poems
+package me.wangxuan.chinese_poems
 
 import io.flutter.embedding.android.FlutterActivity
 

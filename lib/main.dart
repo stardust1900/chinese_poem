@@ -441,7 +441,6 @@ class _MyHomePageState extends State<MyHomePage> {
                             log('写入文件时发生错误: $e');
                           }
                           audioSource = DeviceFileSource(filePath);
-                          // final file = File('/Users/shawn/Library/Containers/com.example.chinesePoems/Data/Library/Caches/d305a');
                           audioPlayer.play(audioSource!);
                           // audioPlayer.play(UrlSource(file.path));
                         } catch (e) {
