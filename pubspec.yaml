@@ -37,17 +37,17 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter_localizations:
     sdk: flutter
-  showcaseview: ^4.0.0
+  showcaseview: ^5.0.1
   shared_preferences: ^2.3.5
 
   http: ^1.2.2
-  intl: 0.19.0
+  intl: ^0.20.2
   args: ^2.4.0
   crypto: ^3.0.2
   uuid: ^4.5.1
-  web_socket_client: ^0.1.5
-  web_socket_channel: ^3.0.1
-  audioplayers: ^6.1.0
+  web_socket_client: ^0.2.1
+  web_socket_channel: ^3.0.3
+  audioplayers: ^6.5.1
   path_provider: ^2.1.5
 
 
@@ -60,7 +60,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

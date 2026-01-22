@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:crypto/crypto.dart';
@@ -95,6 +96,36 @@ class DRM {
     final bytes = utf8.encode(strToHash);
     final digest = sha256.convert(bytes);
     return digest.toString().toUpperCase();
+  }
+
+  /// Generates a random MUID.
+  ///
+  /// Returns:
+  ///   String: The generated MUID (32-character hexadecimal string in uppercase).
+  static String generateMuid() {
+    final random = Random.secure();
+    final bytes = List<int>.filled(16, 0);
+    for (int i = 0; i < bytes.length; i++) {
+      bytes[i] = random.nextInt(256);
+    }
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join('').toUpperCase();
+  }
+
+  /// Returns a copy of the given headers with the MUID header added.
+  ///
+  /// Args:
+  ///   headers (Map<String, String>): The original headers.
+  ///
+  /// Returns:
+  ///   Map<String, String>: The headers with the MUID header added.
+  ///
+  /// Throws:
+  ///   AssertionError: If the headers already contain a "Cookie" header.
+  static Map<String, String> headersWithMuid(Map<String, String> headers) {
+    final combinedHeaders = Map<String, String>.from(headers);
+    assert(!combinedHeaders.containsKey('Cookie'), 'Headers already contain Cookie header');
+    combinedHeaders['Cookie'] = 'muid=${DRM.generateMuid()};';
+    return combinedHeaders;
   }
 }
 

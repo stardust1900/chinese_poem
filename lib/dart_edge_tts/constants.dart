@@ -11,7 +11,7 @@ final String voiceListUrl =
 
 const String defaultVoice = "en-US-EmmaMultilingualNeural";
 
-const String chromiumFullVersion = "130.0.2849.68";
+const String chromiumFullVersion = "143.0.3650.75";
 final String chromiumMajorVersion = chromiumFullVersion.split('.')[0];
 const String secMsGecVersion = "1-$chromiumFullVersion";
 
@@ -20,7 +20,7 @@ final Map<String, String> baseHeaders = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
       " (KHTML, like Gecko) Chrome/$chromiumMajorVersion.0.0.0 Safari/537.36"
       " Edg/$chromiumMajorVersion.0.0.0",
-  "Accept-Encoding": "gzip, deflate, br",
+  "Accept-Encoding": "gzip, deflate, br, zstd",
   "Accept-Language": "en-US,en;q=0.9",
 };
 
@@ -30,6 +30,7 @@ final Map<String, String> wssHeaders = {
   "Pragma": "no-cache",
   "Cache-Control": "no-cache",
   "Origin": "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold",
+  "Sec-WebSocket-Version": "13",
 };
 
 // Voice headers

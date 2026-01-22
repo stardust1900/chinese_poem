@@ -333,15 +333,21 @@ class Communicate {
     //     .setTrustedCertificates("${Directory.current.path}/lib/cacert.pem");
 
     final webSocketUrl = Uri.parse(
-      "$wssUrl&Sec-MS-GEC=${DRM.generateSecMsGec()}"
-      "&Sec-MS-GEC-Version=$secMsGecVersion"
-      "&ConnectionId=${connectId()}",
+      "$wssUrl&ConnectionId=${connectId()}"
+      "&Sec-MS-GEC=${DRM.generateSecMsGec()}"
+      "&Sec-MS-GEC-Version=$secMsGecVersion",
     );
+    final headers = DRM.headersWithMuid(wssHeaders);
     print("webSocketUrl:${webSocketUrl.toString()}");
-    final webSocket = IOWebSocketChannel.connect(webSocketUrl,
-        customClient: HttpClient(context: sslContext), headers: wssHeaders);
-
+    print("WebSocket Headers: $headers");
+    IOWebSocketChannel? webSocket;
     try {
+      webSocket = IOWebSocketChannel.connect(
+        webSocketUrl,
+        customClient: HttpClient(context: sslContext),
+        headers: headers,
+      );
+      print("WebSocket connected.");
       webSocket.sink.add(
         "X-Timestamp:${dateToString()}\r\n"
         "Content-Type:application/json; charset=utf-8\r\n"
@@ -353,20 +359,20 @@ class Communicate {
       );
 
       print("partialText:${utf8.decode(state.partialText)}");
-      webSocket.sink.add(
-        ssmlHeadersPlusData(
-          connectId(),
-          dateToString(),
-          mkssml(ttsConfig, utf8.decode(state.partialText)),
-        ),
+      final cossmldata = ssmlHeadersPlusData(
+        connectId(),
+        dateToString(),
+        mkssml(ttsConfig, utf8.decode(state.partialText)),
       );
+      print("cossmldata:$cossmldata");
+      webSocket.sink.add(cossmldata);
       await for (final message in webSocket.stream) {
         if (webSocket.closeCode != null) {
           print(
               "WebSocket connection was closed with code: ${webSocket.closeCode}");
           break;
         }
-        // print("message:$message");
+        print("message:$message");
         if (message is String) {
           final encodedData = utf8.encode(message);
           final headerEndIndex = message.indexOf("\r\n\r\n");
@@ -448,7 +454,7 @@ class Communicate {
       print("Stack Trace: $stackTrace");
       rethrow;
     } finally {
-      await webSocket.sink.close();
+      await webSocket?.sink.close();
     }
   }
 
@@ -458,7 +464,7 @@ class Communicate {
       throw StateError("stream can only be called once.");
     }
     state.streamWasCalled = true;
-    print(texts);
+    print("texts: $texts");
     // Stream the audio and metadata from the service.
     for (final partialText in texts) {
       state.partialText = partialText; // 更新 state 中的 partialText
