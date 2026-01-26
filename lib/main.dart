@@ -1,13 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
 import 'dart:math' hide log;
-import 'dart:typed_data';
 import 'dart:ui';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:chinese_poems/dart_edge_tts/communicate.dart';
-import 'package:chinese_poems/dart_edge_tts/submaker.dart';
-import 'package:chinese_poems/dart_edge_tts/typing.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:chinese_poems/draggable_floating_button.dart';
 import 'package:chinese_poems/poem_i18n.dart';
 import 'package:chinese_poems/poem_theme.dart';
@@ -16,9 +12,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path_provider/path_provider.dart';
 
 void main() {
+  // 锁定屏幕方向为竖屏
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  
   runApp(const PoemApp());
 }
 
@@ -40,6 +42,7 @@ class _PoemAppState extends State<PoemApp> {
     return MaterialApp(
       // title: '中国古诗',
       locale: lcl,
+      debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => PoemLocalizations.of(context).title,
       localizationsDelegates: const [
         PoemLocalizationsDelegate(),
@@ -58,26 +61,7 @@ class _PoemAppState extends State<PoemApp> {
       ),
       // home: MyHomePage(changeLocale: (locale) => _changeLocale(locale)),
       home: Scaffold(
-        body: ShowCaseWidget(
-          onStart: (index, key) {
-            // log('onStart: $index, $key');
-          },
-          onComplete: (index, key) {
-            // log('onComplete: $index, $key');
-            if (index == 4) {
-              SystemChrome.setSystemUIOverlayStyle(
-                SystemUiOverlayStyle.light.copyWith(
-                  statusBarIconBrightness: Brightness.dark,
-                  statusBarColor: Colors.white,
-                ),
-              );
-            }
-          },
-          blurValue: 1,
-          builder: (context) =>
-              MyHomePage(changeLocale: (locale) => _changeLocale(locale)),
-          autoPlayDelay: const Duration(seconds: 3),
-        ),
+        body: MyHomePage(changeLocale: (locale) => _changeLocale(locale)),
       ),
     );
   }
@@ -111,7 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey _body = GlobalKey();
   bool gameMode = true;
   final changeLocale;
-  final audioPlayer = AudioPlayer();
+  final flutterTts = FlutterTts();
   bool shownEn = false;
   bool showPinyin = false;
   List<bool> checkList = List.filled(13, false);
@@ -119,12 +103,9 @@ class _MyHomePageState extends State<MyHomePage> {
   bool pinyinStyle1 = true; //拼音风格
   bool showAbout = false;
   int reading = 0;
-  String voice = "zh-CN-XiaoxiaoNeural";
-  String lastVoice = "";
-  DeviceFileSource? audioSource;
-  List<Subtitle>? subtitles;
-  int lastSubIdx = 0;
-  int cursorIdx = 0;
+  String voiceName = "";
+  Map<dynamic, dynamic> voice = {};
+  List<Map<dynamic, dynamic>> availableVoices = [];
   var poemJson;
 
 // 选中的诗
@@ -137,6 +118,9 @@ class _MyHomePageState extends State<MyHomePage> {
   //高亮的汉字
   var highLightCharacters = [];
   var allCharacters = [];
+  int currentSentenceIndex = 0; // 当前朗读的句子索引（0=标题, 1=作者, 2+=诗句）
+  List<String> sentences = []; // 要朗读的句子列表
+  bool shouldContinueReading = false; // 是否应该继续朗读下一句
 
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
@@ -145,57 +129,108 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     log("initState begin");
-    audioPlayer.onPlayerStateChanged.listen((PlayerState state) {
-      if (PlayerState.playing == state) {
+    flutterTts.setStartHandler(() {
+      if (mounted) {
         setState(() {
           reading = 1;
         });
-      } else {
-        if (PlayerState.completed == state || PlayerState.stopped == state) {
-          //播放完成或播放停止
-          setState(() {
-            lastSubIdx = 0;
-            cursorIdx = 0;
-            //旧字幕取消高亮
-            for (Character c in highLightCharacters) {
-              c.highLight = false;
-            }
-            highLightCharacters = [];
-          });
-        }
+      }
+    });
+    flutterTts.setErrorHandler((msg) {
+      stopReading();
+      log("TTS Error: $msg");
+    });
+    flutterTts.setCancelHandler(() {
+      stopReading();
+    });
+    flutterTts.setPauseHandler(() {
+      setState(() {
+        reading = 0;
+      });
+    });
+    flutterTts.setContinueHandler(() {
+      if (mounted) {
         setState(() {
-          reading = 0;
+          reading = 1;
         });
       }
     });
-    audioPlayer.onPositionChanged.listen((Duration position) {
-      // log("position:$position");
-      //TODO 可优化： 根据上次位置循环字幕不需从头循环
-      for (Subtitle st in subtitles!) {
-        if (st.start.compareTo(position) <= 0 &&
-            st.end.compareTo(position) >= 0) {
-          if (lastSubIdx != st.index) {
-            setState(() {
-              log("${st.index} ${st.content} ${st.length}");
-              //旧字幕取消高亮
-              for (Character c in highLightCharacters) {
-                c.highLight = false;
-              }
-              highLightCharacters =
-                  allCharacters.sublist(cursorIdx, cursorIdx + st.length);
-              for (Character c in highLightCharacters) {
-                c.highLight = true;
-              }
-              //索引变更，更改字幕
-              log("cursorIdx:$cursorIdx -> ${cursorIdx + st.length} lastSubIdx:$lastSubIdx -> ${st.index}");
-              lastSubIdx = st.index;
-              cursorIdx = cursorIdx + st.length;
-            });
-          }
-          break;
+
+    // Register showcase view global configuration first
+    ShowcaseView.register(
+      onStart: (index, key) {
+        // log('onStart: $index, $key');
+      },
+      onComplete: (index, key) {
+        // log('onComplete: $index, $key');
+        if (index == 4) {
+          SystemChrome.setSystemUIOverlayStyle(
+            SystemUiOverlayStyle.light.copyWith(
+              statusBarIconBrightness: Brightness.dark,
+              statusBarColor: Colors.white,
+            ),
+          );
         }
+      },
+      blurValue: 1,
+      autoPlayDelay: const Duration(seconds: 3),
+    );
+
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Set default language
+      // await flutterTts.setLanguage("zh-CN");
+      await flutterTts.setSpeechRate(0.5);
+      await flutterTts.setVolume(1.0);
+      await flutterTts.setPitch(1.0);
+
+      // Ensure speak(...) awaits actual completion on platforms that support it
+      try {
+        await flutterTts.awaitSpeakCompletion(true);
+      } catch (e) {
+        log("awaitSpeakCompletion not supported: $e");
       }
+
+      // Get available voices
+      var voices = await flutterTts.getVoices;
+      // log("Available voices: $voices");
+      setState(() {
+        availableVoices = voices.cast<Map<dynamic, dynamic>>();
+        availableVoices = availableVoices.where((e) {
+          if (e['features'] != null) {
+            if (e['features'].toString().contains("notInstalled")) {
+              return false;
+            }
+          }
+          if (e['locale'] != null) {
+            if (e['locale'].toString().startsWith("zh")) {
+              return true;
+            } else {
+              return false;
+            }
+          } else {
+            return false;
+          }
+        }).toList();
+        // Find a Chinese voice as default
+        if (availableVoices.isNotEmpty) {
+          try {
+            voice = availableVoices.firstWhere(
+              (v) =>
+                  v['locale'] != null &&
+                  v['locale'].toString().startsWith("zh"),
+              orElse: () => <dynamic, dynamic>{},
+            );
+            log("Chinese voice: $voice");
+            voiceName = voice['name']?.toString() ?? "";
+          } catch (e) {
+            log("No Chinese voice found, using default");
+          }
+        }
+      });
     });
+
     // int rInt;
     rootBundle.loadString('asset/datas/chinese_poems.json').then((res) => {
           poemJson = jsonDecode(res),
@@ -230,32 +265,219 @@ class _MyHomePageState extends State<MyHomePage> {
           }),
         });
 
-    super.initState();
-
     _prefs.then((SharedPreferences prefs) {
-      bool showcaseview = prefs.getBool('showcaseview') ?? true;
-      // log("showcaseview: $showcaseview");
+      log("prefs showcaseview: ${prefs.getString('showcaseview')}");
+      bool showcaseview = prefs.getString('showcaseview') != "false";
+      log("showcaseview: $showcaseview");
       if (showcaseview) {
-        prefs.setBool('showcaseview', !showcaseview);
-        //showcaseview操作指引
+        prefs.setString('showcaseview', "false");
+        //showcaseview操作指引 - 添加延迟确保界面完全渲染后再显示
         WidgetsBinding.instance.addPostFrameCallback(
-          (_) => ShowCaseWidget.of(context).startShowCase(
-              [_zero, _one, _two, _three, _four, _five, _six, _seven]),
+          (_) => Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              ShowcaseView.get().startShowCase(
+                  [_zero, _one, _two, _three, _four, _five, _six, _seven]);
+            }
+          }),
         );
       }
     });
   }
 
   //检查是不是标点符号
+  static const _punctuationSet = {'，', '。', '？', '！', '；', "：", "、", "·"};
   bool isPunctuate(String s) {
-    return s == '，' ||
-        s == '。' ||
-        s == '？' ||
-        s == '！' ||
-        s == '；' ||
-        s == "：" ||
-        s == "、" ||
-        s == "·";
+    return _punctuationSet.contains(s);
+  }
+
+  // 准备句子列表
+  void prepareSentences() {
+    var title = choosePoem['title_cns'];
+    var author = choosePoem['author_cns'];
+    var paragraphs = choosePoem['paragraphs_cns'];
+    sentences = [title, author, ...paragraphs];
+  }
+
+  // 高亮当前句子
+  void highlightCurrentSentence() {
+    // 清除所有高亮
+    for (Character c in titleCharacters) {
+      c.highLight = false;
+    }
+    for (Character c in authorCharacters) {
+      c.highLight = false;
+    }
+    for (var row in rowsCharacters) {
+      if (row != null) {
+        for (Character c in row) {
+          c.highLight = false;
+        }
+      }
+    }
+
+    // 根据当前句子索引高亮对应部分
+    if (currentSentenceIndex == 0) {
+      // 高亮标题
+      for (Character c in titleCharacters) {
+        if (!c.isPunctuate) {
+          c.highLight = true;
+        }
+      }
+    } else if (currentSentenceIndex == 1) {
+      // 高亮作者
+      for (Character c in authorCharacters) {
+        if (!c.isPunctuate) {
+          c.highLight = true;
+        }
+      }
+    } else {
+      // 高亮对应诗句行
+      int rowIndex = currentSentenceIndex - 2;
+      if (rowIndex >= 0 && rowIndex < rowsCharacters.length) {
+        var row = rowsCharacters[rowIndex];
+        if (row != null) {
+          for (Character c in row) {
+            if (!c.isPunctuate) {
+              c.highLight = true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 朗读当前句子
+  Future<void> speakCurrentSentence() async {
+    if (!mounted) {
+      log("Widget not mounted, stopping");
+      return;
+    }
+
+    if (!shouldContinueReading) {
+      log("shouldContinueReading is false, returning without calling stopReading");
+      return;
+    }
+
+    if (currentSentenceIndex >= sentences.length) {
+      // 所有句子读完
+      log("All sentences read, setting shouldContinueReading to false");
+      shouldContinueReading = false;
+      if (mounted) {
+        setState(() {
+          reading = 0;
+          // 清除所有高亮
+          for (Character c in titleCharacters) {
+            c.highLight = false;
+          }
+          for (Character c in authorCharacters) {
+            c.highLight = false;
+          }
+          for (var row in rowsCharacters) {
+            if (row != null) {
+              for (Character c in row) {
+                c.highLight = false;
+              }
+            }
+          }
+        });
+      }
+      return;
+    }
+
+    var sentence = sentences[currentSentenceIndex];
+    log("Speaking sentence $currentSentenceIndex: $sentence");
+
+    // 高亮当前句子
+    setState(() {
+      highlightCurrentSentence();
+      reading = 1;
+    });
+
+    try {
+      // 朗读
+      await flutterTts.speak(sentence);
+      log("Finished speaking sentence $currentSentenceIndex");
+
+      // 朗读完成后，自动读下一句
+      if (mounted && shouldContinueReading && reading == 1) {
+        log("Auto-reading next sentence");
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted && shouldContinueReading && reading == 1) {
+          currentSentenceIndex++;
+          await speakCurrentSentence();
+        }
+      }
+    } catch (e) {
+      log("Error speaking sentence: $e");
+      shouldContinueReading = false;
+      currentSentenceIndex = 0;
+      if (mounted) {
+        setState(() {
+          reading = 0;
+          // 清除所有高亮
+          for (Character c in titleCharacters) {
+            c.highLight = false;
+          }
+          for (Character c in authorCharacters) {
+            c.highLight = false;
+          }
+          for (var row in rowsCharacters) {
+            if (row != null) {
+              for (Character c in row) {
+                c.highLight = false;
+              }
+            }
+          }
+        });
+      }
+      flutterTts.stop();
+    }
+  }
+
+  // 开始朗读
+  void startReading() async {
+    if (reading != 0) {
+      log("Already reading or paused, ignoring start request");
+      return;
+    }
+
+    prepareSentences();
+    currentSentenceIndex = 0;
+    shouldContinueReading = true;
+    await speakCurrentSentence();
+  }
+
+  // 停止朗读
+  void stopReading() {
+    // 避免重复调用
+    if (!shouldContinueReading && reading == 0) {
+      log("stopReading already called, ignoring");
+      return;
+    }
+
+    log("stopReading called, current shouldContinueReading: $shouldContinueReading, reading: $reading");
+    shouldContinueReading = false;
+    currentSentenceIndex = 0;
+    if (mounted) {
+      setState(() {
+        reading = 0;
+        // 清除所有高亮
+        for (Character c in titleCharacters) {
+          c.highLight = false;
+        }
+        for (Character c in authorCharacters) {
+          c.highLight = false;
+        }
+        for (var row in rowsCharacters) {
+          if (row != null) {
+            for (Character c in row) {
+              c.highLight = false;
+            }
+          }
+        }
+      });
+    }
+    flutterTts.stop();
   }
 
   List<Widget> genTitleAndAuthor(context, colorScheme) {
@@ -383,9 +605,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     if (reading == 1) {
                       return Icon(Icons.record_voice_over,
                           color: colorScheme.tertiary);
-                    } else if (reading == 2) {
-                      return Icon(Icons.multitrack_audio,
-                          color: colorScheme.tertiary);
                     } else {
                       return Icon(Icons.record_voice_over_outlined,
                           color: colorScheme.tertiary);
@@ -393,70 +612,25 @@ class _MyHomePageState extends State<MyHomePage> {
                   }(),
                   onPressed: () async {
                     if (reading == 0) {
-                      if (audioSource == null || lastVoice != voice) {
-                        var title = choosePoem['title_cns'];
-                        var author = choosePoem['author_cns'];
-                        var paragraphs = choosePoem['paragraphs_cns'].join();
-
-                        var txt = "$title $author $paragraphs";
-                        log(txt);
-                        var communicate = Communicate(text: txt, voice: voice);
-                        lastVoice = voice;
-                        var submaker = SubMaker();
-                        var bytesBuilder = BytesBuilder();
+                      try {
+                        log("Selected voice: $voice");
+                        var name = voice['name']?.toString();
+                        var locale = voice['locale']?.toString();
+                        if (name != null && locale != null) {
+                          await flutterTts
+                              .setVoice({"name": name, "locale": locale});
+                        }
+                        startReading();
+                      } catch (e) {
+                        log('Error playing audio: $e');
                         setState(() {
-                          reading = 2;
+                          reading = 0;
                         });
-                        try {
-                          await for (final message in communicate.stream()) {
-                            if (message.type == TTSChunkType.audio) {
-                              //处理声音
-                              // 使用 null-aware operator和空列表初始化确保message.data不为null
-                              final audioData = message.data ?? Uint8List(0);
-                              if (audioData.isNotEmpty) {
-                                log("add audioData");
-                                bytesBuilder.add(audioData);
-                              }
-                            } else if (message.type ==
-                                TTSChunkType.wordBoundary) {
-                              //处理字幕
-                              submaker.feed(message);
-                            }
-                          }
-                          log("bytesBuilder");
-
-                          subtitles = submaker.cues;
-                          log("play sound");
-                          final tempDir = await getTemporaryDirectory();
-
-                          final filePath = "${tempDir.path}/$title.mp3";
-                          log("filePath:$filePath");
-                          // 将字节数组写入文件
-                          try {
-                            File file = File(filePath);
-                            await file.writeAsBytes(
-                                bytesBuilder.toBytes()); // 异步写入字节数据
-                            log('数据已成功写入文件: $filePath');
-                          } catch (e) {
-                            log('写入文件时发生错误: $e');
-                          }
-                          audioSource = DeviceFileSource(filePath);
-                          audioPlayer.play(audioSource!);
-                          // audioPlayer.play(UrlSource(file.path));
-                        } catch (e) {
-                          log('Error playing audio: $e');
-                        }
-                      } else {
-                        if (PlayerState.paused == audioPlayer.state) {
-                          audioPlayer.resume();
-                        } else {
-                          audioPlayer.play(audioSource!);
-                        }
                       }
                     } else if (reading == 1) {
-                      if (PlayerState.playing == audioPlayer.state) {
-                        audioPlayer.pause();
-                      }
+                      await flutterTts.pause();
+                    } else if (reading == 2) {
+                      // Loading state, do nothing
                     } else {
                       log("$reading");
                     }
@@ -1099,58 +1273,33 @@ class _MyHomePageState extends State<MyHomePage> {
             iconEnabledColor: colorScheme.primary,
             style: TextStyle(color: colorScheme.onSecondary, fontSize: 12),
             isExpanded: true,
-            value: voice,
-            items: [
-              DropdownMenuItem<String>(
-                  value: "zh-CN-XiaoxiaoNeural",
-                  child: Text("Xiaoxiao - Chinese (Mainland)", softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-CN-XiaoyiNeural",
-                  child: Text("Xiaoyi - Chinese (Mainland)", softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-CN-YunjianNeural",
-                  child: Text("Yunjian - Chinese (Mainland)", softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-CN-YunxiNeural",
-                  child: Text("Yunxi - Chinese (Mainland)", softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-CN-YunxiaNeural",
-                  child: Text("Yunxia - Chinese (Mainland)", softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-CN-YunyangNeural",
-                  child: Text("Yunyang - Chinese (Mainland)", softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-CN-liaoning-XiaobeiNeural",
-                  child: Text("Xiaobei - Chinese (Northeastern Mandarin)",
-                      softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-CN-shaanxi-XiaoniNeural",
-                  child: Text("Xiaoni - Chinese (Mandarin Shaanxi)",
-                      softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-HK-HiuGaaiNeural",
-                  child: Text("HiuGaai - Chinese (Cantonese)", softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-HK-HiuMaanNeural",
-                  child: Text("HiuMaan - Chinese (Hong Kong)", softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-HK-WanLungNeural",
-                  child: Text("WanLung - Chinese (Hong Kong)", softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-TW-HsiaoChenNeural",
-                  child: Text("HsiaoChen - Chinese (Taiwan)", softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-TW-YunJheNeural",
-                  child: Text("YunJhe - Chinese (Taiwan)", softWrap: true)),
-              DropdownMenuItem<String>(
-                  value: "zh-TW-HsiaoYuNeural",
-                  child: Text("HsiaoYu - Chinese (Taiwan Mandarin)",
-                      softWrap: true)),
-            ],
-            onChanged: (value) {
-              setState(() {
-                voice = value as String;
-              });
+            value: voiceName,
+            items: availableVoices.isEmpty
+                ? [
+                    DropdownMenuItem<String>(
+                        value: "", child: Text("加载中...", softWrap: true))
+                  ]
+                : availableVoices.map<DropdownMenuItem<String>>((v) {
+                    var name = v['name']?.toString() ?? '';
+                    // var locale = v['locale']?.toString() ?? '';
+                    return DropdownMenuItem<String>(
+                        value: name, child: Text(name, softWrap: true));
+                  }).toList(),
+            onChanged: (value) async {
+              if (value != null) {
+                setState(() {
+                  voiceName = value;
+                  voice = availableVoices.firstWhere(
+                    (v) => value.contains(v['name']!.toString()),
+                    orElse: () => <dynamic, dynamic>{},
+                  );
+                });
+                var name = voice['name']?.toString();
+                var locale = voice['locale']?.toString();
+                if (name != null && locale != null) {
+                  await flutterTts.setVoice({"name": name, "locale": locale});
+                }
+              }
             }),
       )
     ]);
@@ -1303,12 +1452,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void changePoem() {
     log("changePoem start");
-    if (PlayerState.playing == audioPlayer.state) {
-      audioPlayer.stop();
-    }
+    flutterTts.stop();
     setState(() {
-      audioSource = null;
       reading = 0;
+      currentSentenceIndex = 0;
       pickCharacters.clear();
       var checked = checkList.where((c) => c).toList();
       var candidates = poemJson;
@@ -1363,6 +1510,13 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       });
     }
+  }
+
+  @override
+  void dispose() {
+    flutterTts.stop();
+    ShowcaseView.get().unregister();
+    super.dispose();
   }
 }
 
