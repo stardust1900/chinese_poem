@@ -13,14 +13,19 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  // 锁定屏幕方向为竖屏
+// 全局初始化 FlutterTts 以避免线程问题
+late final FlutterTts flutterTts;
+
+void main() async {
+  // 确保 Flutter 绑定初始化
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 锁定屏幕方向为竖屏
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   runApp(const PoemApp());
 }
 
@@ -95,7 +100,6 @@ class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey _body = GlobalKey();
   bool gameMode = true;
   final changeLocale;
-  final flutterTts = FlutterTts();
   bool shownEn = false;
   bool showPinyin = false;
   List<bool> checkList = List.filled(13, false);
@@ -121,15 +125,24 @@ class _MyHomePageState extends State<MyHomePage> {
   int currentSentenceIndex = 0; // 当前朗读的句子索引（0=标题, 1=作者, 2+=诗句）
   List<String> sentences = []; // 要朗读的句子列表
   bool shouldContinueReading = false; // 是否应该继续朗读下一句
+  bool isManuallyPaused = false; // 是否是手动暂停
 
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
+  // 在组件首次构建后延迟初始化 FlutterTts
+  bool _ttsInitialized = false;
+
   _MyHomePageState(this.changeLocale);
 
-  @override
-  void initState() {
-    log("initState begin");
+  void _initializeTTS() {
+    if (_ttsInitialized) return;
+    _ttsInitialized = true;
+
+    flutterTts = FlutterTts();
+    log("TTS initialized");
+
     flutterTts.setStartHandler(() {
+      log("TTS Start triggered");
       if (mounted) {
         setState(() {
           reading = 1;
@@ -137,24 +150,50 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
     flutterTts.setErrorHandler((msg) {
-      stopReading();
       log("TTS Error: $msg");
-    });
-    flutterTts.setCancelHandler(() {
-      stopReading();
-    });
-    flutterTts.setPauseHandler(() {
-      setState(() {
-        reading = 0;
-      });
-    });
-    flutterTts.setContinueHandler(() {
+      if (!shouldContinueReading) return;
+      shouldContinueReading = false;
+      currentSentenceIndex = 0;
       if (mounted) {
         setState(() {
-          reading = 1;
+          reading = 0;
+        });
+      }
+      flutterTts.stop();
+    });
+    flutterTts.setCancelHandler(() {
+      log("TTS Cancel triggered");
+      if (!shouldContinueReading && reading == 0) return;
+      // 如果是手动暂停，不重置索引
+      if (!isManuallyPaused) {
+        currentSentenceIndex = 0;
+      }
+      shouldContinueReading = false;
+      if (mounted) {
+        setState(() {
+          reading = 0;
         });
       }
     });
+    flutterTts.setPauseHandler(() {
+      log("TTS Pause callback triggered");
+      // 暂停回调不需要额外处理，因为暂停是用户主动触发的
+    });
+    flutterTts.setContinueHandler(() {
+      log("TTS Continue triggered");
+      // FlutterTts 不支持 pause/resume，所以这个回调通常不会触发
+      // 但我们保留它以防万一
+      if (mounted) {
+        setState(() {
+          reading = 1; // 恢复为播放状态
+        });
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    log("initState begin");
 
     // Register showcase view global configuration first
     ShowcaseView.register(
@@ -178,12 +217,24 @@ class _MyHomePageState extends State<MyHomePage> {
 
     super.initState();
 
+    // 在首次构建后初始化 TTS
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeTTS();
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // 确保 TTS 已初始化
+      if (!_ttsInitialized) return;
+
       // Set default language
       // await flutterTts.setLanguage("zh-CN");
-      await flutterTts.setSpeechRate(0.5);
-      await flutterTts.setVolume(1.0);
-      await flutterTts.setPitch(1.0);
+      try {
+        await flutterTts.setSpeechRate(0.5);
+        await flutterTts.setVolume(1.0);
+        await flutterTts.setPitch(1.0);
+      } catch (e) {
+        log("Error setting TTS params: $e");
+      }
 
       // Ensure speak(...) awaits actual completion on platforms that support it
       try {
@@ -193,42 +244,48 @@ class _MyHomePageState extends State<MyHomePage> {
       }
 
       // Get available voices
-      var voices = await flutterTts.getVoices;
-      // log("Available voices: $voices");
-      setState(() {
-        availableVoices = voices.cast<Map<dynamic, dynamic>>();
-        availableVoices = availableVoices.where((e) {
-          if (e['features'] != null) {
-            if (e['features'].toString().contains("notInstalled")) {
-              return false;
+      try {
+        var voices = await flutterTts.getVoices;
+        // log("Available voices: $voices");
+        if (mounted) {
+          setState(() {
+            availableVoices = voices.cast<Map<dynamic, dynamic>>();
+            availableVoices = availableVoices.where((e) {
+              if (e['features'] != null) {
+                if (e['features'].toString().contains("notInstalled")) {
+                  return false;
+                }
+              }
+              if (e['locale'] != null) {
+                if (e['locale'].toString().startsWith("zh")) {
+                  return true;
+                } else {
+                  return false;
+                }
+              } else {
+                return false;
+              }
+            }).toList();
+            // Find a Chinese voice as default
+            if (availableVoices.isNotEmpty) {
+              try {
+                voice = availableVoices.firstWhere(
+                  (v) =>
+                      v['locale'] != null &&
+                      v['locale'].toString().startsWith("zh"),
+                  orElse: () => <dynamic, dynamic>{},
+                );
+                log("Chinese voice: $voice");
+                voiceName = voice['name']?.toString() ?? "";
+              } catch (e) {
+                log("No Chinese voice found, using default");
+              }
             }
-          }
-          if (e['locale'] != null) {
-            if (e['locale'].toString().startsWith("zh")) {
-              return true;
-            } else {
-              return false;
-            }
-          } else {
-            return false;
-          }
-        }).toList();
-        // Find a Chinese voice as default
-        if (availableVoices.isNotEmpty) {
-          try {
-            voice = availableVoices.firstWhere(
-              (v) =>
-                  v['locale'] != null &&
-                  v['locale'].toString().startsWith("zh"),
-              orElse: () => <dynamic, dynamic>{},
-            );
-            log("Chinese voice: $voice");
-            voiceName = voice['name']?.toString() ?? "";
-          } catch (e) {
-            log("No Chinese voice found, using default");
-          }
+          });
         }
-      });
+      } catch (e) {
+        log("Error getting voices: $e");
+      }
     });
 
     // int rInt;
@@ -353,8 +410,10 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
-    if (!shouldContinueReading) {
-      log("shouldContinueReading is false, returning without calling stopReading");
+    log("speakCurrentSentence called: currentSentenceIndex=$currentSentenceIndex, shouldContinueReading=$shouldContinueReading, reading=$reading, sentences.length=${sentences.length}");
+
+    if (!shouldContinueReading && reading != 2) {
+      log("shouldContinueReading is false and not paused, returning");
       return;
     }
 
@@ -398,19 +457,23 @@ class _MyHomePageState extends State<MyHomePage> {
       await flutterTts.speak(sentence);
       log("Finished speaking sentence $currentSentenceIndex");
 
-      // 朗读完成后，自动读下一句
-      if (mounted && shouldContinueReading && reading == 1) {
+      // 朗读完成后，自动读下一句（仅在未暂停时）
+      if (mounted && shouldContinueReading && reading == 1 && !isManuallyPaused) {
         log("Auto-reading next sentence");
         await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted && shouldContinueReading && reading == 1) {
+        if (mounted && shouldContinueReading && reading == 1 && !isManuallyPaused) {
           currentSentenceIndex++;
           await speakCurrentSentence();
         }
+      } else {
+        // 如果暂停或停止，不执行下一句
+        log("Not auto-reading next sentence: shouldContinueReading=$shouldContinueReading, reading=$reading, isManuallyPaused=$isManuallyPaused");
       }
     } catch (e) {
       log("Error speaking sentence: $e");
       shouldContinueReading = false;
       currentSentenceIndex = 0;
+      _resetTTSCallbacks();
       if (mounted) {
         setState(() {
           reading = 0;
@@ -430,7 +493,11 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         });
       }
-      flutterTts.stop();
+      try {
+        await flutterTts.stop();
+      } catch (e) {
+        log("Error stopping TTS: $e");
+      }
     }
   }
 
@@ -444,6 +511,7 @@ class _MyHomePageState extends State<MyHomePage> {
     prepareSentences();
     currentSentenceIndex = 0;
     shouldContinueReading = true;
+    isManuallyPaused = false; // 重置手动暂停标志
     await speakCurrentSentence();
   }
 
@@ -477,7 +545,22 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       });
     }
-    flutterTts.stop();
+    try {
+      flutterTts.stop();
+    } catch (e) {
+      log("Error stopping TTS: $e");
+    }
+  }
+
+  // 重置 TTS 回调以防止重复触发
+  void _resetTTSCallbacks() {
+    flutterTts.setStartHandler(() {});
+    flutterTts.setErrorHandler((msg) {
+      log("TTS Error: $msg");
+    });
+    flutterTts.setCancelHandler(() {});
+    flutterTts.setPauseHandler(() {});
+    flutterTts.setContinueHandler(() {});
   }
 
   List<Widget> genTitleAndAuthor(context, colorScheme) {
@@ -603,8 +686,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   // iconSize: 18,
                   icon: () {
                     if (reading == 1) {
-                      return Icon(Icons.record_voice_over,
-                          color: colorScheme.tertiary);
+                      return Icon(Icons.pause, color: colorScheme.tertiary);
+                    } else if (reading == 2) {
+                      return Icon(Icons.play_arrow, color: colorScheme.tertiary);
                     } else {
                       return Icon(Icons.record_voice_over_outlined,
                           color: colorScheme.tertiary);
@@ -628,11 +712,42 @@ class _MyHomePageState extends State<MyHomePage> {
                         });
                       }
                     } else if (reading == 1) {
-                      await flutterTts.pause();
+                      // 正在播放，暂停
+                      try {
+                        // 先设置停止标志，阻止自动播放
+                        shouldContinueReading = false;
+                        // 标记为手动暂停
+                        isManuallyPaused = true;
+                        // 停止 TTS
+                        await flutterTts.stop();
+                        log("TTS paused manually at index $currentSentenceIndex");
+                        if (mounted) {
+                          setState(() {
+                            reading = 2;
+                          });
+                        }
+                      } catch (e) {
+                        log("Error pausing TTS: $e");
+                      }
                     } else if (reading == 2) {
-                      // Loading state, do nothing
+                      // 已暂停，继续播放
+                      try {
+                        log("Resuming playback from sentence $currentSentenceIndex, sentences length: ${sentences.length}");
+                        // 检查句子列表是否已准备
+                        if (sentences.isEmpty) {
+                          prepareSentences();
+                          log("Sentences prepared: ${sentences.length} sentences");
+                        }
+                        // 清除手动暂停标志
+                        isManuallyPaused = false;
+                        // 确保从当前句子开始，不重置索引
+                        shouldContinueReading = true;
+                        await speakCurrentSentence();
+                      } catch (e) {
+                        log("Error resuming TTS: $e");
+                      }
                     } else {
-                      log("$reading");
+                      log("Unexpected reading state: $reading");
                     }
                   },
                 ))),
@@ -734,8 +849,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           final rc = rowsCharacters[r][idx];
                           if (!rc.visibable && !isPunctuate(rc.txtCns)) {
                             //没显示的字有1/5的概率显示
-                            int r = Random().nextInt(5);
-                            if (r == 0) {
+                            int rand = Random().nextInt(5);
+                            if (rand == 0) {
                               rc.visibable = true;
                               pickCharacters.remove(pickCharacters.firstWhere(
                                   (element) => element.txtCns == rc.txtCns));
