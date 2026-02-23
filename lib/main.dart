@@ -323,11 +323,11 @@ class _MyHomePageState extends State<MyHomePage> {
         });
 
     _prefs.then((SharedPreferences prefs) {
-      log("prefs showcaseview: ${prefs.getString('showcaseview')}");
-      bool showcaseview = prefs.getString('showcaseview') != "false";
+      log("prefs showcaseview: ${prefs.getBool('showcaseview')}");
+      bool showcaseview = prefs.getBool('showcaseview') ?? true;
       log("showcaseview: $showcaseview");
       if (showcaseview) {
-        prefs.setString('showcaseview', "false");
+        prefs.setBool('showcaseview', false);
         //showcaseview操作指引 - 添加延迟确保界面完全渲染后再显示
         WidgetsBinding.instance.addPostFrameCallback(
           (_) => Future.delayed(const Duration(milliseconds: 500), () {

@@ -1,5 +1,8 @@
 PODS:
   - audioplayers_darwin (0.0.1):
+    - Flutter
+    - FlutterMacOS
+  - flutter_tts (0.0.1):
     - FlutterMacOS
   - FlutterMacOS (1.0.0)
   - path_provider_foundation (0.0.1):
@@ -10,14 +13,17 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
-  - audioplayers_darwin (from `Flutter/ephemeral/.symlinks/plugins/audioplayers_darwin/macos`)
+  - audioplayers_darwin (from `Flutter/ephemeral/.symlinks/plugins/audioplayers_darwin/darwin`)
+  - flutter_tts (from `Flutter/ephemeral/.symlinks/plugins/flutter_tts/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
   - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
   - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
 
 EXTERNAL SOURCES:
   audioplayers_darwin:
-    :path: Flutter/ephemeral/.symlinks/plugins/audioplayers_darwin/macos
+    :path: Flutter/ephemeral/.symlinks/plugins/audioplayers_darwin/darwin
+  flutter_tts:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_tts/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
   path_provider_foundation:
@@ -26,11 +32,12 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin
 
 SPEC CHECKSUMS:
-  audioplayers_darwin: 761f2948df701d05b5db603220c384fb55720012
-  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
-  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
-  shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
+  audioplayers_darwin: 4f9ca89d92d3d21cec7ec580e78ca888e5fb68bd
+  flutter_tts: ae915565cc6948444b513acc8ee021993281e027
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
+  shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
 
-PODFILE CHECKSUM: 7eb978b976557c8c1cd717d8185ec483fd090a82
+PODFILE CHECKSUM: 54d867c82ac51cbd61b565781b9fada492027009
 
 COCOAPODS: 1.16.2
