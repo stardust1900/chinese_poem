@@ -52,7 +52,7 @@ class PoemLocalizations {
       'aboutLine4':
           'The pinyin of all Chinese characters is generated through pypinyin, and the English translation of ancient poems in textbooks is generated through Baidu Translate. There are many inaccuracies, for reference only.',
       'aboutLine5':
-          'If you have any questions or suggestions about this application, please contact me. :)\n email:stardust1900@hotmail.com\n weibo:@君敕',
+          'If you have any questions or suggestions about this application, please contact me. :)\n email:stardust1900@hotmail.com\n weibo:@王一舠',
     },
     'zh': {
       'title': '拼拼古诗',
@@ -94,7 +94,7 @@ class PoemLocalizations {
       'aboutLine4':
           '所有汉字的拼音是通过pypinyin生成的，教科书中古诗的英文翻译是通过百度翻译生成的，有很多不准确的地方，仅供参考。',
       'aboutLine5':
-          '如果你对这个应用有什么问题或者建议，请联系我 :)\n email:stardust1900@hotmail.com\n 微博:@君敕',
+          '如果你对这个应用有什么问题或者建议，请联系我 :)\n email:stardust1900@hotmail.com\n 微博:@王一舠',
     },
   };
 
