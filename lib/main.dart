@@ -140,6 +140,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 显示浮动 feedback
   void _updateFeedback(Offset position, String char, bool isColliding) {
+    if (!mounted) return;
     _feedbackPosition = position - const Offset(0, 80);
 
     // 重新创建 OverlayEntry 以更新颜色
@@ -168,12 +169,19 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 移除浮动 feedback
   void _removeFeedback() {
-    _feedbackOverlay?.remove();
-    _feedbackOverlay = null;
+    if (_feedbackOverlay != null) {
+      try {
+        _feedbackOverlay!.remove();
+      } catch (e) {
+        log("Error removing feedback: $e");
+      }
+      _feedbackOverlay = null;
+    }
   }
 
   // 检测 feedback 与 DragTarget 的碰撞，返回是否碰撞
   bool _checkCollisionWithTargets(Offset touchPosition, String char) {
+    if (rowsCharacters.isEmpty) return false;
     final feedbackCenter = touchPosition - const Offset(0, 80);
     const halfSize = 20.0;
 
@@ -204,6 +212,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 松开手指时处理碰撞
   void _handleDragEnd(Offset releasePosition, String char) {
+    if (rowsCharacters.isEmpty) return;
     final feedbackCenter = releasePosition - const Offset(0, 80);
     const halfSize = 20.0;
 
@@ -227,8 +236,14 @@ class _MyHomePageState extends State<MyHomePage> {
         if (dx < halfSize + targetHalf && dy < halfSize + targetHalf) {
           setState(() {
             targetChar.visibable = true;
-            pickCharacters
-                .removeWhere((e) => e.txtCns == char || e.txtCnt == char);
+            // 只移除第一个匹配的字符
+            for (int i = 0; i < pickCharacters.length; i++) {
+              if (pickCharacters[i].txtCns == char ||
+                  pickCharacters[i].txtCnt == char) {
+                pickCharacters.removeAt(i);
+                break;
+              }
+            }
             if (pickCharacters.isEmpty) {
               showDialog(
                   context: context,
@@ -265,29 +280,12 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     flutterTts.setErrorHandler((msg) {
       log("TTS Error: $msg");
-      if (!shouldContinueReading) return;
       shouldContinueReading = false;
-      currentSentenceIndex = 0;
-      if (mounted) {
-        setState(() {
-          reading = 0;
-        });
-      }
-      flutterTts.stop();
     });
     flutterTts.setCancelHandler(() {
       log("TTS Cancel triggered");
-      if (!shouldContinueReading && reading == 0) return;
-      // 如果是手动暂停，不重置索引
-      if (!isManuallyPaused) {
-        currentSentenceIndex = 0;
-      }
+      // 不在 cancel handler 中调用 setState，避免与 changePoem 冲突
       shouldContinueReading = false;
-      if (mounted) {
-        setState(() {
-          reading = 0;
-        });
-      }
     });
     flutterTts.setPauseHandler(() {
       log("TTS Pause callback triggered");
@@ -1642,7 +1640,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void changePoem() {
     log("changePoem start");
-    flutterTts.stop();
+    if (!mounted) {
+      log("Widget not mounted, skipping changePoem");
+      return;
+    }
+    // 不调用 flutterTts.stop()，避免可能的崩溃
+    // 清理悬浮 feedback
+    _removeFeedback();
+    // 同步执行状态更新
+    _doChangePoem();
+  }
+
+  void _doChangePoem() {
     setState(() {
       reading = 0;
       currentSentenceIndex = 0;
@@ -1665,11 +1674,6 @@ class _MyHomePageState extends State<MyHomePage> {
         }).toList();
       }
       var tempPoem = candidates[Random().nextInt(candidates.length)];
-      //去掉重复判断 防止死循环
-      // while (tempPoem['title_cns'] == choosePoem['title_cns']) {
-      //   // log("${tempPoem['title_cns']},${choosePoem['title_cns']}");
-      //   tempPoem = candidates[Random().nextInt(candidates.length)];
-      // }
       choosePoem = tempPoem;
       var paragraphsCns = choosePoem['paragraphs_cns'];
       var paragraphsCnt = choosePoem['paragraphs_cnt'];
@@ -1691,20 +1695,22 @@ class _MyHomePageState extends State<MyHomePage> {
       //初始化固定长度数组
       rowsCharacters = []..length = paragraphsCns.length;
       log("changePoem end");
+
+      // gameMode 为 false 时直接显示答案
+      if (!gameMode) {
+        showAnswer();
+      }
     });
-    if (!gameMode) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        // 这里的代码将在状态更新且UI重新绘制后执行
-        setState(() {
-          showAnswer();
-        });
-      });
-    }
   }
 
   @override
   void dispose() {
-    flutterTts.stop();
+    try {
+      flutterTts.stop();
+    } catch (e) {
+      log("Error stopping TTS: $e");
+    }
+    _removeFeedback();
     ShowcaseView.get().unregister();
     super.dispose();
   }
