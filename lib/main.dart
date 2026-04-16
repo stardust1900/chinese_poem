@@ -132,7 +132,121 @@ class _MyHomePageState extends State<MyHomePage> {
   // 在组件首次构建后延迟初始化 FlutterTts
   bool _ttsInitialized = false;
 
+  // 手动控制的 feedback 状态
+  OverlayEntry? _feedbackOverlay;
+  Offset _feedbackPosition = Offset.zero;
+
   _MyHomePageState(this.changeLocale);
+
+  // 显示浮动 feedback
+  void _updateFeedback(Offset position, String char, bool isColliding) {
+    _feedbackPosition = position - const Offset(0, 80);
+
+    // 重新创建 OverlayEntry 以更新颜色
+    _feedbackOverlay?.remove();
+    _feedbackOverlay = OverlayEntry(
+      builder: (ctx) => Positioned(
+        left: _feedbackPosition.dx - 30,
+        top: _feedbackPosition.dy - 30,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            width: 60,
+            height: 60,
+            alignment: Alignment.center,
+            child: Text(char,
+                style: TextStyle(
+                    fontSize: 40,
+                    color: isColliding ? Colors.green : Colors.red,
+                    fontWeight: FontWeight.bold)),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(_feedbackOverlay!);
+  }
+
+  // 移除浮动 feedback
+  void _removeFeedback() {
+    _feedbackOverlay?.remove();
+    _feedbackOverlay = null;
+  }
+
+  // 检测 feedback 与 DragTarget 的碰撞，返回是否碰撞
+  bool _checkCollisionWithTargets(Offset touchPosition, String char) {
+    final feedbackCenter = touchPosition - const Offset(0, 80);
+    const halfSize = 20.0;
+
+    for (int r = 0; r < rowsCharacters.length; r++) {
+      if (rowsCharacters[r] == null) continue;
+      for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
+        final targetChar = rowsCharacters[r][idx];
+        if (targetChar.visibable || isPunctuate(targetChar.txtCns)) continue;
+        if (targetChar.txtCns != char && targetChar.txtCnt != char) continue;
+
+        final RenderBox? box =
+            targetChar.key.currentContext?.findRenderObject() as RenderBox?;
+        if (box == null) continue;
+
+        final targetPos = box.localToGlobal(Offset.zero);
+        const targetHalf = 20.0;
+
+        final dx = (feedbackCenter.dx - targetPos.dx - targetHalf).abs();
+        final dy = (feedbackCenter.dy - targetPos.dy - targetHalf).abs();
+
+        if (dx < halfSize + targetHalf && dy < halfSize + targetHalf) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // 松开手指时处理碰撞
+  void _handleDragEnd(Offset releasePosition, String char) {
+    final feedbackCenter = releasePosition - const Offset(0, 80);
+    const halfSize = 20.0;
+
+    for (int r = 0; r < rowsCharacters.length; r++) {
+      if (rowsCharacters[r] == null) continue;
+      for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
+        final targetChar = rowsCharacters[r][idx];
+        if (targetChar.visibable || isPunctuate(targetChar.txtCns)) continue;
+        if (targetChar.txtCns != char && targetChar.txtCnt != char) continue;
+
+        final RenderBox? box =
+            targetChar.key.currentContext?.findRenderObject() as RenderBox?;
+        if (box == null) continue;
+
+        final targetPos = box.localToGlobal(Offset.zero);
+        const targetHalf = 20.0;
+
+        final dx = (feedbackCenter.dx - targetPos.dx - targetHalf).abs();
+        final dy = (feedbackCenter.dy - targetPos.dy - targetHalf).abs();
+
+        if (dx < halfSize + targetHalf && dy < halfSize + targetHalf) {
+          setState(() {
+            targetChar.visibable = true;
+            pickCharacters
+                .removeWhere((e) => e.txtCns == char || e.txtCnt == char);
+            if (pickCharacters.isEmpty) {
+              showDialog(
+                  context: context,
+                  builder: (dialogContext) {
+                    return AlertDialog(
+                      title: Text(
+                          PoemLocalizations.of(dialogContext).congratulations),
+                      content:
+                          Text(PoemLocalizations.of(dialogContext).succeed),
+                    );
+                  });
+            }
+          });
+          return; // 找到后直接返回，不再继续
+        }
+      }
+    }
+  }
 
   void _initializeTTS() {
     if (_ttsInitialized) return;
@@ -323,9 +437,11 @@ class _MyHomePageState extends State<MyHomePage> {
         });
 
     _prefs.then((SharedPreferences prefs) {
-      log("prefs showcaseview: ${prefs.getBool('showcaseview')}");
-      bool showcaseview = prefs.getBool('showcaseview') ?? true;
-      log("showcaseview: $showcaseview");
+      // 处理可能的类型不匹配（之前可能存储为字符串）
+      dynamic rawValue = prefs.get('showcaseview');
+      bool showcaseview =
+          rawValue == true || rawValue == "true" || rawValue == null;
+      log("prefs showcaseview raw: $rawValue, parsed: $showcaseview");
       if (showcaseview) {
         prefs.setBool('showcaseview', false);
         //showcaseview操作指引 - 添加延迟确保界面完全渲染后再显示
@@ -1057,57 +1173,20 @@ class _MyHomePageState extends State<MyHomePage> {
                             style: TextStyle(color: colorScheme.error),
                           ))),
                     ),
-                    DragTarget<String>(
-                        builder: (context, candidateData, rejectedData) {
-                      return Container(
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.center,
-                        color: colorScheme.secondary,
-                        child: Visibility(
-                            visible: c.visibable,
-                            child: Text(simplifiedChinese ? c.txtCns : c.txtCnt,
-                                style: TextStyle(
-                                    fontSize: 25,
-                                    backgroundColor:
-                                        c.highLight ? Colors.amber : null))),
-                      );
-                    },
-                        // 当拖拽进入时，判断是否接受
-                        onWillAcceptWithDetails: (s) {
-                      return s.data == c.txtCns || s.data == c.txtCnt;
-                    }, onAcceptWithDetails: (s) {
-                      setState(() {
-                        rowsCharacters = rowsCharacters;
-                        c.visibable = true;
-                        pickCharacters.remove(pickCharacters.firstWhere(
-                            (element) =>
-                                element.txtCns == s.data ||
-                                element.txtCnt == s.data));
-                        // for (int r = 0; r < rowsCharacters.length; r++) {
-                        //   for (int idx = 0;
-                        //       idx < rowsCharacters[r].length;
-                        //       idx++) {
-                        //     if (!rowsCharacters[r][idx].isPunctuate &&
-                        //         !rowsCharacters[r][idx].visibable) {
-                        //       return;
-                        //     }
-                        //   }
-                        // }
-                        if (pickCharacters.isEmpty) {
-                          showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: Text(PoemLocalizations.of(context)
-                                      .congratulations),
-                                  content: Text(
-                                      PoemLocalizations.of(context).succeed),
-                                );
-                              });
-                        }
-                      });
-                    })
+                    Container(
+                      key: c.key,
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      color: colorScheme.secondary,
+                      child: Visibility(
+                          visible: c.visibable,
+                          child: Text(simplifiedChinese ? c.txtCns : c.txtCnt,
+                              style: TextStyle(
+                                  fontSize: 25,
+                                  backgroundColor:
+                                      c.highLight ? Colors.amber : null))),
+                    )
                   ],
                 ),
               )))
@@ -1156,85 +1235,61 @@ class _MyHomePageState extends State<MyHomePage> {
       var c = simplifiedChinese
           ? pickCharacters[i].txtCns
           : pickCharacters[i].txtCnt;
-      var drag = LongPressDraggable<String>(
-        data: c,
-        feedback: Transform.translate(
-          offset: const Offset(0, -50),
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.yellow.shade100,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(2, 2),
-                  ),
-                ],
-              ),
-              alignment: Alignment.center,
-              child: Text(c,
-                  style: const TextStyle(
-                      fontSize: 40,
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ),
-        childWhenDragging: Container(
-          width: 40,
-          height: 40,
-          color: Colors.grey.shade200,
-        ),
-        maxSimultaneousDrags: 1,
-        child: GestureDetector(
-            onTap: () {
-              setState(() {
-                for (int r = 0; r < rowsCharacters.length; r++) {
-                  for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
-                    final rc = rowsCharacters[r][idx];
-                    if (!rc.visibable && !isPunctuate(rc.txtCns)) {
-                      if (rc.txtCns == c || rc.txtCnt == c) {
-                        rc.visibable = true;
-                        pickCharacters.remove(pickCharacters.firstWhere(
-                            (element) => element.txtCns == rc.txtCns));
+      var drag = GestureDetector(
+        onTap: () {
+          setState(() {
+            for (int r = 0; r < rowsCharacters.length; r++) {
+              for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
+                final rc = rowsCharacters[r][idx];
+                if (!rc.visibable && !isPunctuate(rc.txtCns)) {
+                  if (rc.txtCns == c || rc.txtCnt == c) {
+                    rc.visibable = true;
+                    pickCharacters.remove(pickCharacters
+                        .firstWhere((element) => element.txtCns == rc.txtCns));
 
-                        if (pickCharacters.isEmpty) {
-                          showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: Text(PoemLocalizations.of(context)
-                                      .congratulations),
-                                  content: Text(
-                                      PoemLocalizations.of(context).succeed),
-                                );
-                              });
-                        }
-                        return;
-                      } else {
-                        return;
-                      }
+                    if (pickCharacters.isEmpty) {
+                      showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: Text(PoemLocalizations.of(context)
+                                  .congratulations),
+                              content:
+                                  Text(PoemLocalizations.of(context).succeed),
+                            );
+                          });
                     }
+                    return;
+                  } else {
+                    return;
                   }
                 }
-              });
-            },
-            child: Container(
-              // 正常状态下的显示
-              width: 40,
-              height: 40,
-              color: const Color.fromARGB(255, 243, 239, 239),
-              alignment: Alignment.topCenter,
-              child: Text(
-                c,
-                style: const TextStyle(fontSize: 30),
-              ),
-            )),
+              }
+            }
+          });
+        },
+        onLongPressStart: (details) {
+          _updateFeedback(details.globalPosition, c, false);
+        },
+        onLongPressMoveUpdate: (details) {
+          bool isColliding =
+              _checkCollisionWithTargets(details.globalPosition, c);
+          _updateFeedback(details.globalPosition, c, isColliding);
+        },
+        onLongPressEnd: (details) {
+          _handleDragEnd(details.globalPosition, c);
+          _removeFeedback();
+        },
+        child: Container(
+          width: 40,
+          height: 40,
+          color: const Color.fromARGB(255, 243, 239, 239),
+          alignment: Alignment.topCenter,
+          child: Text(
+            c,
+            style: const TextStyle(fontSize: 30),
+          ),
+        ),
       );
       dragList.add(drag);
     }
@@ -1694,5 +1749,6 @@ class Character {
   bool visibable = false;
   bool isPunctuate = false;
   bool highLight = false;
+  GlobalKey key = GlobalKey(); // 用于碰撞检测
   Character(this.txtCns, this.txtCnt, this.pinyin1, this.pinyin2);
 }
