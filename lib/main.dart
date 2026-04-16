@@ -458,10 +458,16 @@ class _MyHomePageState extends State<MyHomePage> {
       log("Finished speaking sentence $currentSentenceIndex");
 
       // 朗读完成后，自动读下一句（仅在未暂停时）
-      if (mounted && shouldContinueReading && reading == 1 && !isManuallyPaused) {
+      if (mounted &&
+          shouldContinueReading &&
+          reading == 1 &&
+          !isManuallyPaused) {
         log("Auto-reading next sentence");
         await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted && shouldContinueReading && reading == 1 && !isManuallyPaused) {
+        if (mounted &&
+            shouldContinueReading &&
+            reading == 1 &&
+            !isManuallyPaused) {
           currentSentenceIndex++;
           await speakCurrentSentence();
         }
@@ -688,7 +694,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     if (reading == 1) {
                       return Icon(Icons.pause, color: colorScheme.tertiary);
                     } else if (reading == 2) {
-                      return Icon(Icons.play_arrow, color: colorScheme.tertiary);
+                      return Icon(Icons.play_arrow,
+                          color: colorScheme.tertiary);
                     } else {
                       return Icon(Icons.record_voice_over_outlined,
                           color: colorScheme.tertiary);
@@ -1149,31 +1156,44 @@ class _MyHomePageState extends State<MyHomePage> {
       var c = simplifiedChinese
           ? pickCharacters[i].txtCns
           : pickCharacters[i].txtCnt;
-      var drag = Draggable<String>(
+      var drag = LongPressDraggable<String>(
         data: c,
-        feedback: Container(
-          // 拖拽时的显示
-          width: 45,
-          height: 45,
-          color: const Color.fromARGB(255, 243, 239, 239),
-          alignment: Alignment.center,
-          child: Text(c, style: const TextStyle(fontSize: 35)),
-        ), // 携带的数据
+        feedback: Transform.translate(
+          offset: const Offset(0, -50),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.yellow.shade100,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(2, 2),
+                  ),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: Text(c,
+                  style: const TextStyle(
+                      fontSize: 40,
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ),
+        childWhenDragging: Container(
+          width: 40,
+          height: 40,
+          color: Colors.grey.shade200,
+        ),
+        maxSimultaneousDrags: 1,
         child: GestureDetector(
-            onDoubleTap: () {
+            onTap: () {
               setState(() {
-                // for (int r = 0; r < rowsCharacters.length; r++) {
-                //   for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
-                //     final rc = rowsCharacters[r][idx];
-                //     if (rc.txtCns == c || rc.txtCnt == c) {
-                //       if (!rc.visibable) {
-                //         rc.visibable = true;
-                //         pickCharacters.removeAt(i);
-                //         return;
-                //       }
-                //     }
-                //   }
-                // }
                 for (int r = 0; r < rowsCharacters.length; r++) {
                   for (int idx = 0; idx < rowsCharacters[r].length; idx++) {
                     final rc = rowsCharacters[r][idx];
